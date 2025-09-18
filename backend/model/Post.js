@@ -1,28 +1,39 @@
 import mongoose from "mongoose";
 
-const postschema = mongoose.Schema({
+const postSchema = new mongoose.Schema(
+  {
     title: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
+      trim: true,
+    },
+    author: {
+      type: String,
+      required: true,
+      trim: true,
     },
     content: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
+      trim: true,
     },
-    image : {
-        type: String,
-        default: null
+    image: {
+      type: String,
+      default: null, // Cloudinary URL haddii la upload gareeyo
     },
-    pdf: {                       // field cusub oo PDF link ah
-        type: String,
-        default: null
+    pdf: {
+      type: String,
+      default: null, // Cloudinary URL haddii la upload gareeyo
     },
-    author : {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    }         
-});
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // admin/user ID
+    },
+  },
+  {
+    timestamps: true, // createdAt & updatedAt otomaatig ah
+  }
+);
 
-const Post = mongoose.model("Post", postschema);
+const Post = mongoose.model("Post", postSchema);
 export default Post;

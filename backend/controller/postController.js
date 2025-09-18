@@ -1,59 +1,150 @@
 import Post from "../model/Post.js";
 import cloudinary from "../config/cloudinary.js";
 
+/* =====================================================
+   CREATE  (Admin Only)
+   ===================================================== */
 export const createPost = async (req, res) => {
   try {
-    const currentUser = req.user._id;
+    console.log("Tijaabo admin miya tahay")
     const { title, content } = req.body;
+    if (!title || !content) {
+      return res.status(400).json({ message: "Title and content are required" });
+    }
 
+    // Uploads
     let imageUrl = null;
     let pdfUrl = null;
 
-    // Upload image to Cloudinary
     if (req.files?.image) {
-      const encode_image = `data:image/jpg;base64,${req.files.image[0].buffer.toString('base64')}`;
-      const imageResult = await cloudinary.uploader.upload(encode_image, {
+      const encodedImg = `data:${req.files.image[0].mimetype};base64,${req.files.image[0].buffer.toString("base64")}`;
+      const imageResult = await cloudinary.uploader.upload(encodedImg, {
         resource_type: "image",
         transformation: [{ width: 500, height: 500, crop: "limit" }],
-        encoding: "base64"
       });
       imageUrl = imageResult.secure_url;
     }
 
-    // Upload PDF to Cloudinary
     if (req.files?.pdf) {
-      const encode_pdf = `data:application/pdf;base64,${req.files.pdf[0].buffer.toString('base64')}`;
-      const pdfResult = await cloudinary.uploader.upload(encode_pdf, {
-        resource_type: "raw", // PDF = raw
-        encoding: "base64",
-        public_id: `post_pdf_${Date.now()}`
+      const encodedPdf = `data:application/pdf;base64,${req.files.pdf[0].buffer.toString("base64")}`;
+      const pdfResult = await cloudinary.uploader.upload(encodedPdf, {
+        resource_type: "raw",
+        public_id: `post_pdf_${Date.now()}`,
       });
       pdfUrl = pdfResult.secure_url;
     }
 
-    // Save new Post
-    const newPost = new Post({
+    const newPost = await Post.create({
       title,
       content,
       image: imageUrl,
       pdf: pdfUrl,
-      author: currentUser
+      uploadedBy: req.user._id,
     });
 
-    await newPost.save();
     res.status(201).json(newPost);
-
-  } catch (error) {
-    console.error("Error while creating post", error);
-    res.status(400).json({ message: error.message });
+  } catch (err) {
+    console.error("Error creating post:", err);
+    res.status(500).json({ message: "Server Error" });
   }
 };
+
+/* =====================================================
+   READ  (All Users)
+   ===================================================== */
 export const getPosts = async (req, res) => {
   try {
-    const posts = await Post.find().populate("author", "username email").sort({ createdAt: -1 });
+    const posts = await Post.find()
+      .populate("uploadedBy", "username email role")
+      .sort({ createdAt: -1 });
+
     res.status(200).json(posts);
-  } catch (error) {
-    console.error("Error while fetching posts", error);
+  } catch (err) {
+    console.error("Error fetching posts:", err);
     res.status(500).json({ message: "Server Error" });
-  } 
+  }
+};
+
+// Get single post
+export const getPostById = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id).populate(
+      "uploadedBy",
+      "username email role"
+    );
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    res.status(200).json(post);
+  } catch (err) {
+    console.error("Error fetching post:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+/* =====================================================
+   UPDATE  (Admin Only & owner)
+   ===================================================== */
+export const updatePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const post = await Post.findById(id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    // Only the admin who created it can update
+    if (req.user.role !== "admin" || post.uploadedBy.toString() !== req.user._id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const { title, content } = req.body;
+    if (title) post.title = title;
+    if (content) post.content = content;
+
+    // Optional new uploads
+    if (req.files?.image) {
+      const encodedImg = `data:${req.files.image[0].mimetype};base64,${req.files.image[0].buffer.toString("base64")}`;
+      const imageResult = await cloudinary.uploader.upload(encodedImg, {
+        resource_type: "image",
+        transformation: [{ width: 500, height: 500, crop: "limit" }],
+      });
+      post.image = imageResult.secure_url;
+    }
+
+    if (req.files?.pdf) {
+      const encodedPdf = `data:application/pdf;base64,${req.files.pdf[0].buffer.toString("base64")}`;
+      const pdfResult = await cloudinary.uploader.upload(encodedPdf, {
+        resource_type: "raw",
+        public_id: `post_pdf_${Date.now()}`,
+      });
+      post.pdf = pdfResult.secure_url;
+    }
+
+    const updated = await post.save();
+    res.status(200).json(updated);
+  } catch (err) {
+    console.error("Error updating post:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+/* =====================================================
+   DELETE  (Admin Only & owner)
+   ===================================================== */
+export const deletePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const post = await Post.findById(id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    if (req.user.role !== "admin" || post.uploadedBy.toString() !== req.user._id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    await post.deleteOne();
+    res.status(200).json({ message: "Post deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting post:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
 };
