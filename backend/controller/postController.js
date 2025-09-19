@@ -7,9 +7,9 @@ import cloudinary from "../config/cloudinary.js";
 export const createPost = async (req, res) => {
   try {
     console.log("Tijaabo admin miya tahay")
-    const { title, content } = req.body;
-    if (!title || !content) {
-      return res.status(400).json({ message: "Title and content are required" });
+    const { title, author, content } = req.body;
+    if (!title || !author || !content) {
+      return res.status(400).json({ message: "Title, author, and content are required" });
     }
 
     // Uploads
@@ -36,6 +36,7 @@ export const createPost = async (req, res) => {
 
     const newPost = await Post.create({
       title,
+      author,
       content,
       image: imageUrl,
       pdf: pdfUrl,
@@ -92,8 +93,8 @@ export const updatePost = async (req, res) => {
     if (!post) return res.status(404).json({ message: "Post not found" });
 
     // Only the admin who created it can update
-    if (req.user.role !== "admin" || post.uploadedBy.toString() !== req.user._id) {
-      return res.status(403).json({ message: "Forbidden" });
+   if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Admins only" });
     }
 
     const { title, content } = req.body;
@@ -137,8 +138,8 @@ export const deletePost = async (req, res) => {
     const post = await Post.findById(id);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    if (req.user.role !== "admin" || post.uploadedBy.toString() !== req.user._id) {
-      return res.status(403).json({ message: "Forbidden" });
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Admins only" });
     }
 
     await post.deleteOne();

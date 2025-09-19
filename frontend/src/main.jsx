@@ -13,8 +13,8 @@ import Login from './pages/Login.jsx';
 
 import Register from './pages/Register.jsx';
 import Home from './components/Home.jsx';
-import Books from './components/Books.jsx';
 import Booked from './components/Booked.jsx';
+import EditPost from './components/EditPost.jsx';
 
 
 
@@ -31,8 +31,8 @@ const router = createBrowserRouter([
 
         { path: '/Home', 
           element: <Home /> },
-         { path: '/Books', 
-          element: <Books /> },
+         { path: '/edit/:id', 
+          element: <EditPost /> },
           { path: '/Booked', 
           element: <Booked /> },
          

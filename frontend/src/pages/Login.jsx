@@ -37,16 +37,13 @@ const Login = () => {
         setLoading(false);
         login(data, data.expirein)
         navigate("/"); // Redirect to home page after successful login
-
-
-
     } catch (error) {
         setLoading(false);
-        toast.error(error.response.data);
+        toast.error(error.response?.data?.message || "Login failed. Please try again.");
         console.error(error);
         
     }
-    }
+  };
   return (
     
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-200">
@@ -99,3 +96,4 @@ const Login = () => {
   );
 }
 export default Login;
+

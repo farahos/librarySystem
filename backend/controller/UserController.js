@@ -52,28 +52,20 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    // ✅ JWT expire time: 7 days
-    const expiresInSec = 7 * 24 * 60 * 60; // seconds
-    const expiresInMs = expiresInSec * 1000;
+    const expirein  = 7 * 24 * 60 * 60 * 1000; // 7 days
+        // const token = jwt.sign({ _id: isuserExist._id}, jwt_secret, {expirein});
+        const token = jwt.sign({ _id: user._id, role: user.role }, jwt_secret, {expiresIn: expirein});
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: false,
+            maxAge: expirein * 1000 // Convert to milliseconds
 
-    const token = jwt.sign({ _id: user._id, role: user.role }, jwt_secret, {
-      expiresIn: expiresInSec,
-    });
+        });
 
-    // Cookie settings
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false, // true if HTTPS in production
-      maxAge: expiresInMs,
-    });
+        res.status(200).send({...user.toJSON(), expirein});
 
-    // Remove password before sending
-    const userData = user.toObject();
-    delete userData.password;
-
-    res.status(200).json({ ...userData, token, expiresIn: expiresInSec });
-  } catch (error) {
-    console.error("Error in logging in user:", error);
-    res.status(500).json({ message: "Error in logging in user" });
-  }
-};
+    }catch(error){
+        console.log("Error in logging in user:", error);
+        res.status(400).send({message: "Error in logging in user"});
+    }
+}
