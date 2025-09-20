@@ -32,11 +32,15 @@ const Login = () => {
     setLoading(true);
     try {
         const {data} = await axios.post('/api/user/loginuser', form);
-        console.log(data); 
+        console.log(data.role); 
         toast.success("Login successful!");
         setLoading(false);
         login(data, data.expirein)
-        navigate("/"); // Redirect to home page after successful login
+        if(data.role === "admin"){
+          navigate("/sidebar"); // Redirect to admin dashboard after successful login
+        }
+        else
+        navigate("/header"); // Redirect to home page after successful login
     } catch (error) {
         setLoading(false);
         toast.error(error.response?.data?.message || "Login failed. Please try again.");
