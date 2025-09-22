@@ -15,6 +15,9 @@ import Register from './pages/Register.jsx';
 import Home from './components/Home.jsx';
 import Booked from './components/Booked.jsx';
 import EditPost from './components/EditPost.jsx';
+import AdminDashboard from './admin/AdminDashboard.jsx';
+import AddBook from './admin/AddBook.jsx';
+import ViewBook from './admin/ViewBook.jsx';
 
 
 
@@ -35,6 +38,13 @@ const router = createBrowserRouter([
           element: <EditPost /> },
           { path: '/Booked', 
           element: <Booked /> },
+           { path: '/admin-dashboard', 
+          element: <AdminDashboard /> },
+           { path: '/addbook', 
+          element: <AddBook /> },
+           { path: '/viewbook', 
+          element: <ViewBook /> },
+
          
     ]
   

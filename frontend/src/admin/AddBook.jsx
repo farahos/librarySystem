@@ -1,0 +1,81 @@
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const AddBook = () => {
+  const [title, setTitle] = useState("");
+  const [author, setAuthor] = useState("");
+  const [content, setContent] = useState("");
+  const [image, setImage] = useState(null);
+  const [pdf, setPdf] = useState(null);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("author", author);
+    formData.append("content", content);
+    if (image) formData.append("image", image);
+    if (pdf) formData.append("pdf", pdf);
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post("/api/post/createPost", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      navigate("/posts");
+    } catch (err) {
+      console.error(err.response?.data || err);
+      alert("Failed to create post");
+    }
+  };
+
+  return (
+    <div className="max-w-lg mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-4">Create Post</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          className="w-full border p-2 rounded"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+        <input
+          className="w-full border p-2 rounded"
+          placeholder="Author"
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          required
+        />
+        <textarea
+          className="w-full border p-2 rounded"
+          placeholder="Content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={4}
+          required
+        />
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setImage(e.target.files[0])}
+        />
+        <input
+          type="file"
+          accept="application/pdf"
+          onChange={(e) => setPdf(e.target.files[0])}
+        />
+        <button className="bg-blue-600 text-white px-4 py-2 rounded">
+          Create
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default AddBook;

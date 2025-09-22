@@ -1,45 +1,66 @@
-// src/components/Header.jsx
-import { Link } from "react-router-dom";
+// src/components/Sidebar.jsx
+import { Link, useLocation } from "react-router-dom";
 import { useUser } from "../hooks/useUser";
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { LayoutDashboard, Users, BookOpen, BarChart2, LogOut } from "lucide-react";
 
 const Sidebar = () => {
-   const {user , logout} = useUser();
-    const navigate = useNavigate();
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    useEffect(()=>{
-         if(!user) navigate("/login")
-       },[user])
-   
+  // kaliya admin ayuu muujiyaa sidebar-ka
+  if (!user || user.role !== "admin") return "No Access";
+
+  const linkClasses = (path) =>
+    `flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors ${
+      location.pathname === path
+        ? "bg-indigo-600 text-white"
+        : "text-gray-100 hover:bg-indigo-600 hover:text-white"
+    }`;
+
   return (
-    <nav className="bg-blue-600 text-white p-4 shadow-md">
-      <div className="flex justify-between items-center max-w-6xl mx-auto">
-        <h1 className="text-xl font-bold">Book System</h1>
-        <ul className="flex space-x-4">
-          {user ?
-          <>
-          <li><Link to="/Home" className="hover:underline">Home</Link></li>
-          <li><Link to="/Books" className="hover:underline">Books</Link></li>
-          <li><Link to="/Booked" className="hover:underline">Booked</Link></li>
-         
-
-         
-          <button className="hover:underline" onClick={() => logout()}>Logout</button>
-          </>
-
-          :
-          <>
-          
-          <li><Link to="/login" className="hover:underline">Login</Link></li>
-           <li><Link to="/Register" className="hover:underline">Register</Link></li>
-
-          </>
-}
-        </ul>
-          
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-indigo-700 to-indigo-500 shadow-lg flex flex-col">
+      {/* Title */}
+      <div className="p-4 border-b border-indigo-400">
+        <h1 className="text-2xl font-bold text-white">{ "Welcome " +user.username}</h1>
       </div>
-    </nav>
+
+      {/* Nav Links */}
+      <nav className="flex-1 mt-4 space-y-2">
+        <Link to="/admin-dashboard" className={linkClasses("/admin-dashboard")}>
+          <LayoutDashboard size={20} />
+          <span>Dashboard</span>
+        </Link>
+
+        <Link to="/admin/users" className={linkClasses("/admin/users")}>
+          <Users size={20} />
+          <span>Manage Users</span>
+        </Link>
+
+        <Link to="/addbook" className={linkClasses("/addbook")}>
+          <BookOpen size={20} />
+          <span>Add Book</span>
+        </Link>
+
+        <Link to="/viewbook" className={linkClasses("/viewbook")}>
+          <BarChart2 size={20} />
+          <span>View Book</span>
+        </Link>
+      </nav>
+
+      {/* Logout */}
+      <button
+        onClick={() => {
+          logout();
+          navigate("/login");
+        }}
+        className="m-4 flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-100 hover:bg-red-600 hover:text-white transition-colors"
+      >
+        <LogOut size={20} />
+        <span>Logout</span>
+      </button>
+    </aside>
   );
 };
 
