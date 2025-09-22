@@ -67,7 +67,7 @@ const PostsReadOnly = () => {
       )}
 
       {/* ✅ All Posts Section */}
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
+      <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-900 mb-8">
         All Posts
       </h1>
 
