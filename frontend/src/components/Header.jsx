@@ -21,7 +21,7 @@ const Header = () => {
           <>
           <li><Link to="/Home" className="hover:underline">Home</Link></li>
           <li><Link to="/Books" className="hover:underline">Books</Link></li>
-          <li><Link to="/Booked" className="hover:underline">Booked</Link></li>
+          <li><Link to="/Booked" className="hover:underline">My Book</Link></li>
          
 
          
@@ -44,3 +44,5 @@ const Header = () => {
 };
 
 export default Header;
+
+

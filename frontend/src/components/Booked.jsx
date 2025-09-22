@@ -2,9 +2,7 @@ import React from 'react'
 
 const Booked = () => {
   return (
-    <div>
-      
-    </div>
+    <div>Booked</div>
   )
 }
 

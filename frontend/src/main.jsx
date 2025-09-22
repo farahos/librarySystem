@@ -18,6 +18,7 @@ import EditPost from './components/EditPost.jsx';
 import AdminDashboard from './admin/AdminDashboard.jsx';
 import AddBook from './admin/AddBook.jsx';
 import ViewBook from './admin/ViewBook.jsx';
+import Books from './components/Books.jsx';
 
 
 
@@ -38,6 +39,8 @@ const router = createBrowserRouter([
           element: <EditPost /> },
           { path: '/Booked', 
           element: <Booked /> },
+          { path: '/Books', 
+          element: <Books /> },
            { path: '/admin-dashboard', 
           element: <AdminDashboard /> },
            { path: '/addbook', 
