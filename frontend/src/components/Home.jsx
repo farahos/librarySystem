@@ -1,12 +1,12 @@
-
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Slider from "react-slick";
+import { Link } from "react-router-dom";
 
-const PostsReadOnly = () => {
+const Home = () => {
   const [posts, setPosts] = useState([]);
 
+  // Fetch all posts
   const fetchPosts = async () => {
     try {
       const { data } = await axios.get("/api/post/getPosts");
@@ -34,12 +34,12 @@ const PostsReadOnly = () => {
     pauseOnHover: true,
   };
 
-  // Kaliya posts leh image
+  // Only posts with an image for banner
   const imagePosts = posts.filter((p) => p.image);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
-      {/* ✅ Banner/Slider Dynamic */}
+      {/* ✅ Banner/Slider */}
       {imagePosts.length > 0 && (
         <div className="mb-12">
           <Slider {...settings}>
@@ -67,16 +67,17 @@ const PostsReadOnly = () => {
       )}
 
       {/* ✅ All Posts Section */}
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-900 mb-8">
+      <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
         All Posts
       </h1>
 
       <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {posts.map((p) => (
-          <div
+          <Link
+            to={`/post/${p._id}`}
             key={p._id}
             className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden
-                       hover:shadow-xl transition-shadow duration-300 h-[650px] flex flex-col"
+                       hover:shadow-xl transition-shadow duration-300 h-[650px] flex flex-col cursor-pointer"
           >
             {p.image && (
               <div className="h-[350px] w-full overflow-hidden">
@@ -98,21 +99,16 @@ const PostsReadOnly = () => {
                 {p.content}
               </p>
               {p.pdf && (
-                <a
-                  href={p.pdf}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 text-indigo-600 dark:text-indigo-400 underline"
-                >
+                <span className="mt-2 text-indigo-600 dark:text-indigo-400 underline">
                   Download PDF
-                </a>
+                </span>
               )}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
   );
 };
 
-export default PostsReadOnly;
+export default Home;

@@ -8,6 +8,8 @@ postRouter.post('/createPost', authenticate , authorizeRoles("admin"), uploadFie
 postRouter.put('/:id', authenticate , authorizeRoles("admin"), uploadFields, updatePost);
 postRouter.delete('/:id', authenticate , authorizeRoles("admin"), deletePost);
 postRouter.get('/getPosts', getPosts);
+//single post 
+
 
 
 

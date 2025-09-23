@@ -19,6 +19,7 @@ import AdminDashboard from './admin/AdminDashboard.jsx';
 import AddBook from './admin/AddBook.jsx';
 import ViewBook from './admin/ViewBook.jsx';
 import Books from './components/Books.jsx';
+import PostDetail from './components/PostDetail.jsx';
 
 
 
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
           element: <AddBook /> },
            { path: '/viewbook', 
           element: <ViewBook /> },
+           { path: '/post/:id', 
+          element: <PostDetail /> },
+
+        
 
          
     ]
