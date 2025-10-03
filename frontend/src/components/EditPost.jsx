@@ -10,6 +10,7 @@ const EditPost = () => {
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
   const [pdf, setPdf] = useState(null);
+  const [audio, setAudio] = useState(null);
 
   useEffect(() => {
     const loadPost = async () => {
@@ -32,6 +33,7 @@ const EditPost = () => {
     formData.append("content", content);
     if (image) formData.append("image", image);
     if (pdf) formData.append("pdf", pdf);
+    if (audio) formData.append("audio", audio);
 
     try {
       const token = localStorage.getItem("token");
@@ -73,6 +75,7 @@ const EditPost = () => {
         />
         <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0])} />
         <input type="file" accept="application/pdf" onChange={(e) => setPdf(e.target.files[0])} />
+        <input type="file" accept="audio/*" onChange={(e) => setAudio(e.target.files[0])} />
         <button className="bg-blue-600 text-white px-4 py-2 rounded">Update</button>
       </form>
     </div>

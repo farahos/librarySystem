@@ -86,7 +86,14 @@ const ViewBook = () => {
                   Download PDF
                 </a>
               )}
-
+              {/* Audio play */}
+              {p.audio && (
+                <audio controls className="mt-2 w-full">
+                  <source src={p.audio} type="audio/mpeg" />
+                  Your browser does not support the audio element.
+                </audio>
+              )}
+              
               {/* Edit & Delete Buttons */}
               <div className="mt-4 flex gap-3">
                 <Link

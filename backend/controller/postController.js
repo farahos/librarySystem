@@ -15,6 +15,7 @@ export const createPost = async (req, res) => {
     // Uploads
     let imageUrl = null;
     let pdfUrl = null;
+    let audioUrl = null;
 
     if (req.files?.image) {
       const encodedImg = `data:${req.files.image[0].mimetype};base64,${req.files.image[0].buffer.toString("base64")}`;
@@ -34,12 +35,22 @@ export const createPost = async (req, res) => {
       pdfUrl = pdfResult.secure_url;
     }
 
+    if (req.files?.audio) {
+      const encodedAudio = `data:audio/mpeg;base64,${req.files.audio[0].buffer.toString("base64")}`;
+      const audioResult = await cloudinary.uploader.upload(encodedAudio, {
+        resource_type: "video",
+        public_id: `post_audio_${Date.now()}`,
+      });
+      audioUrl = audioResult.secure_url;
+    }
+
     const newPost = await Post.create({
       title,
       author,
       content,
       image: imageUrl,
       pdf: pdfUrl,
+      audio: audioUrl,
       uploadedBy: req.user._id,
     });
 
@@ -118,6 +129,14 @@ export const updatePost = async (req, res) => {
         public_id: `post_pdf_${Date.now()}`,
       });
       post.pdf = pdfResult.secure_url;
+    }
+    if (req.files?.audio) {
+      const encodedAudio = `data:audio/mpeg;base64,${req.files.audio[0].buffer.toString("base64")}`;
+      const audioResult = await cloudinary.uploader.upload(encodedAudio, {
+        resource_type: "video",
+        public_id: `post_audio_${Date.now()}`,
+      });
+      post.audio = audioResult.secure_url;
     }
 
     const updated = await post.save();

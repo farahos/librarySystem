@@ -9,7 +9,7 @@ const PostDetail = () => {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const { data } = await axios.get(`/api/post/${id}`);
+        const { data } = await axios.get(`/api/post/getPost/${id}`);
         setPost(data);
       } catch (err) {
         console.error(err.response?.data || err);

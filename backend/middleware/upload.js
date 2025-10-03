@@ -13,7 +13,10 @@ const Upload = multer({
       "image/jpeg",
       "image/png",
       "image/jpg",      // hubi in jpg la aqbalo
-      "application/pdf" // PDF
+      "application/pdf", // PDF
+      "audio/mpeg",     // MP3
+      "audio/wav",      // WAV
+      "audio/ogg",      // OGG
     ];
 
     if (!allowedTypes.includes(file.mimetype)) {
@@ -28,6 +31,7 @@ const Upload = multer({
 export const uploadFields = Upload.fields([
   { name: "image", maxCount: 1 },
   { name: "pdf", maxCount: 1 },
+  { name: "audio", maxCount: 1 } // Haddii aad rabto inaad ku darto audio
 ]);
 
 export default Upload;

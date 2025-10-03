@@ -103,6 +103,12 @@ const Home = () => {
                   Download PDF
                 </span>
               )}
+              {p.audio && (
+                <audio controls className="mt-2 w-full">
+                  <source src={p.audio} type="audio/mpeg" />
+                  Your browser does not support the audio element.
+                </audio>
+              )}
             </div>
           </Link>
         ))}

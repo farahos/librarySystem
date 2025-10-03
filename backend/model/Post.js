@@ -25,6 +25,10 @@ const postSchema = new mongoose.Schema(
       type: String,
       default: null, // Cloudinary URL haddii la upload gareeyo
     },
+    audio: {
+      type: String,
+      default: null, // Cloudinary URL haddii la upload gareeyo
+    },
     uploadedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User", // admin/user ID

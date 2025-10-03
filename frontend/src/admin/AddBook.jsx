@@ -9,6 +9,7 @@ const AddBook = () => {
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [pdf, setPdf] = useState(null);
+  const [audio, setAudio] = useState(null);
   const navigate = useNavigate();
 
   const handleImageChange = (e) => {
@@ -31,6 +32,7 @@ const AddBook = () => {
     formData.append("content", content);
     if (image) formData.append("image", image);
     if (pdf) formData.append("pdf", pdf);
+    if (audio) formData.append("audio", audio);
 
     try {
       const token = localStorage.getItem("token");
@@ -118,6 +120,24 @@ const AddBook = () => {
             {pdf && (
               <p className="mt-2 text-gray-600 font-medium">
                 Selected file: {pdf.name}
+              </p>
+            )}
+
+          </div>
+          {/* Audio Input */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700">
+              Upload Audio
+            </label>
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={(e) => setAudio(e.target.files[0])}
+              className="w-full"
+            />
+            {audio && (
+              <p className="mt-2 text-gray-600 font-medium">
+                Selected file: {audio.name}
               </p>
             )}
           </div>
