@@ -11,7 +11,7 @@ const PORT = 8000
 
 
 app.use(cors({
-  origin: 'https://librarysystem-r0al.onrender.com/', // frontend origin
+  origin: 'https://librarysystem-r0al.onrender.com', // frontend origin
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true // haddii aad isticmaalayso cookies / credentials
