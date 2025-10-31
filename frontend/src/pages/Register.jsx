@@ -108,7 +108,7 @@ const Register = () => {
         if (Object.keys(formErrors).length === 0) {
             setLoading(true);
             try {
-                const { data } = await axios.post('https://librarysystem-r0al.onrender.com/api/user/registerUser', {
+                const { data } = await axios.post('https://dhaxalbook.onrender.com/api/user/registerUser', {
                     username: form.username,
                     email: form.email,
                     password: form.password
