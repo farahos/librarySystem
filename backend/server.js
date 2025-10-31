@@ -5,7 +5,7 @@ import { registerUser } from './controller/UserController.js';
 import userRouter from './routes/UserRoute.js';
 import postRouter from './routes/PostRoute.js';
 import cookieParser from 'cookie-parser';
-
+import cors from 'cors'
 const app = express();
 const PORT = 8000
 
