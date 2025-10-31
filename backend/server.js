@@ -9,6 +9,15 @@ import cookieParser from 'cookie-parser';
 const app = express();
 const PORT = 8000
 
+
+app.use(cors({
+  origin: 'https://http://localhost:5173', // frontend origin
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true // haddii aad isticmaalayso cookies / credentials
+}));
+
+
 app.use(express.json());
 app.use(cookieParser());
 
