@@ -108,7 +108,7 @@ const Register = () => {
         if (Object.keys(formErrors).length === 0) {
             setLoading(true);
             try {
-                const { data } = await axios.post('/api/user/register', {
+                const { data } = await axios.post('/api/user/registerUser', {
                     username: form.username,
                     email: form.email,
                     password: form.password
@@ -117,7 +117,7 @@ const Register = () => {
                 toast.success("Registration successful! Welcome aboard! 🎉");
                 setLoading(false);
                 login(data, data.expirein);
-                navigate("/");
+                navigate("/login");
             } catch (error) {
                 setLoading(false);
                 const errorMessage = error.response?.data?.message || 
