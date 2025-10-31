@@ -20,6 +20,8 @@ import AddBook from './admin/AddBook.jsx';
 import ViewBook from './admin/ViewBook.jsx';
 import Books from './components/Books.jsx';
 import PostDetail from './components/PostDetail.jsx';
+import About from './components/About.jsx';
+import Contact from './components/Contact.jsx';
 
 
 
@@ -50,6 +52,10 @@ const router = createBrowserRouter([
           element: <ViewBook /> },
            { path: '/post/:id', 
           element: <PostDetail /> },
+          { path: '/Contact', 
+          element: <Contact /> },
+          { path: '/About', 
+          element: <About /> },
 
         
 
