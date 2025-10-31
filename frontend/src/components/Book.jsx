@@ -13,7 +13,7 @@ const Book = () => {
   // Fetch all posts
   const fetchPosts = async () => {
     try {
-      const { data } = await axios.get("/api/post/getPosts");
+      const { data } = await axios.get("https://dhaxalbook.onrender.com/api/post/getPosts");
       setPosts(data);
       setFilteredPosts(data);
     } catch (err) {

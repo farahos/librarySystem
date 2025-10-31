@@ -14,7 +14,7 @@ const PostDetail = () => {
       try {
         setLoading(true);
         setError(null);
-        const { data } = await axios.get(`/api/post/getPost/${id}`);
+        const { data } = await axios.get(`https://dhaxalbook.onrender.com/api/post/getPost/${id}`);
         setPost(data);
       } catch (err) {
         console.error("Error fetching post:", err.response?.data || err);

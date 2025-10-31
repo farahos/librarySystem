@@ -14,7 +14,7 @@ const EditPost = () => {
 
   useEffect(() => {
     const loadPost = async () => {
-      const { data } = await axios.get(`/api/post/getPosts`);
+      const { data } = await axios.get(`https://dhaxalbook.onrender.com/api/post/getPosts`);
       const found = data.find((p) => p._id === id);
       if (found) {
         setTitle(found.title);
