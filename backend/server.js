@@ -11,7 +11,7 @@ const PORT = 8000
 
 
 app.use(cors({
-  origin: 'https://http://localhost:5173', // frontend origin
+  origin: 'http://localhost:5173', // frontend origin
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true // haddii aad isticmaalayso cookies / credentials
