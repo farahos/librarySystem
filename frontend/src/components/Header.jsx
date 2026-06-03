@@ -1,203 +1,218 @@
-// src/components/Header.jsx
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { Bell, BookOpen, ChevronDown, LayoutDashboard, Library, LogOut, Menu, PenLine, Settings, User, UserPlus, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../hooks/useUser";
-import { useEffect, useState } from "react";
+import { apiClient, madalLogo } from "../lib/apiClient";
+import { notificationLink, notificationText } from "./NotificationsPage";
+import { Avatar } from "./UserProfile";
+
+const navLinks = [
+  { to: "/Home", label: "Home" },
+  { to: "/Books", label: "Stories" },
+  { to: "/library", label: "Library" },
+  { to: "/create", label: "Write" },
+  { to: "/About", label: "About" },
+  { to: "/Contact", label: "Contact" },
+];
 
 const Header = () => {
   const { user, logout } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const menuRef = useRef(null);
+  const bellRef = useRef(null);
+  const [open, setOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [location]);
-
-  // Handle scroll effect
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    if (!user) navigate("/login");
-  }, [user, navigate]);
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+  const loadNotifications = () => {
+    if (!user) return;
+    apiClient
+      .get("/notifications", { params: { limit: 8 } })
+      .then(({ data }) => {
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unreadCount || 0);
+      })
+      .catch(() => {
+        setNotifications([]);
+        setUnreadCount(0);
+      });
   };
 
-  const navLinks = [
-    { to: "/Home", label: "Home" },
-    { to: "/Books", label: "Books" },
-    { to: "/Booked", label: "My Book" },
-    { to: "/About", label: "About" },
-    { to: "/Contact", label: "Contect" },
+  useEffect(() => {
+    setOpen(false);
+    setUserMenuOpen(false);
+    setNotificationsOpen(false);
+  }, [location.pathname]);
 
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+    loadNotifications();
+  }, [user, location.pathname]);
 
-  ];
+  useEffect(() => {
+    const closeFloating = (event) => {
+      if (menuRef.current?.contains(event.target) || bellRef.current?.contains(event.target)) return;
+      setUserMenuOpen(false);
+      setNotificationsOpen(false);
+    };
+    document.addEventListener("mousedown", closeFloating);
+    return () => document.removeEventListener("mousedown", closeFloating);
+  }, []);
 
-  const linkBaseClasses = "relative group px-3 py-2 font-medium transition-all duration-300 rounded-lg";
-  const linkActiveClasses = "text-yellow-300 bg-white/10";
-  const linkHoverClasses = "hover:text-yellow-300 hover:bg-white/10";
-  const underlineClasses = "absolute left-3 -bottom-1 w-0 h-0.5 bg-yellow-300 transition-all group-hover:w-[calc(100%-1.5rem)]";
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const openNotifications = async () => {
+    const nextOpen = !notificationsOpen;
+    setNotificationsOpen(nextOpen);
+    setUserMenuOpen(false);
+    if (nextOpen) {
+      loadNotifications();
+      if (unreadCount > 0) {
+        await apiClient.patch("/notifications/read").catch(() => {});
+        setUnreadCount(0);
+      }
+    }
+  };
 
   return (
-    <nav className={`bg-gradient-to-r from-indigo-300 to-gray-700 text-white p-4 shadow-2xl sticky top-0 z-50 transition-all duration-300 ${
-      isScrolled ? "py-3" : "py-4"
-    }`}>
-      <div className="flex justify-between items-center max-w-6xl mx-auto">
-        {/* Logo / Title */}
-        <Link 
-          to={user ? "/Home" : "/login"} 
-          className="text-2xl font-extrabold tracking-wider hover:scale-105 transition-transform duration-300 cursor-pointer flex items-center space-x-2"
-        >
-          <span className="text-2xl">📚Dhaxalbook</span>
-          {/* <span className="hidden sm:inline">Book System</span> */}
+    <header className="sticky top-0 z-50 border-b border-orange-100 bg-white/95 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+        <Link to="/Home" className="flex items-center gap-2 text-2xl font-black text-gray-950">
+          <img src={madalLogo} alt="Madal" className="h-11 w-11 rounded-lg object-cover shadow-sm" />
+          Madal
         </Link>
 
-        {/* Desktop Navigation - Hidden on mobile */}
-        <div className="hidden md:flex items-center space-x-2">
-          <ul className="flex space-x-2 items-center">
-            {user ? (
-              <>
-                {navLinks.map((link) => (
-                  <li key={link.to}>
-                    <Link
-                      to={link.to}
-                      className={`${linkBaseClasses} ${linkHoverClasses} ${
-                        location.pathname === link.to ? linkActiveClasses : ""
-                      }`}
-                    >
-                      {link.label}
-                      <span className={underlineClasses}></span>
-                    </Link>
-                  </li>
-                ))}
-                <li>
-                  <button
-                    onClick={() => logout()}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 active:bg-red-700 shadow-lg hover:shadow-red-500/25"
-                  >
-                    Logout
-                  </button>
-                </li>
-              </>
-            ) : (
-              <>
-                <li>
-                  <Link
-                    to="/login"
-                    className="bg-white text-indigo-600 px-4 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105 active:scale-95 active:bg-indigo-100 shadow-lg hover:shadow-indigo-500/25"
-                  >
-                    Login
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/Register"
-                    className="bg-white text-indigo-600 px-4 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105 active:scale-95 active:bg-indigo-100 shadow-lg hover:shadow-indigo-500/25"
-                  >
-                    Register
-                  </Link>
-                </li>
-              </>
-              
-            )}
-            
-          </ul>
-        </div>
+        <nav className="hidden items-center gap-1 md:flex">
+          {navLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`rounded-lg px-3 py-2 text-sm font-bold transition ${
+                location.pathname === link.to ? "bg-orange-50 text-orange-700" : "text-gray-700 hover:bg-gray-50 hover:text-orange-700"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
 
-        {/* Mobile Menu Button - Visible only on mobile */}
-        
-        <div className="md:hidden flex items-center space-x-4">
-         
-          <button
-            onClick={toggleMenu}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 transform hover:scale-105 active:scale-95"
-            aria-label="Toggle menu"
-          >
-            
-            <div className="w-6 h-6 flex flex-col justify-between">
-              
-              <span className={`w-full h-0.5 bg-white rounded transform transition-all duration-300 ${
-                isMenuOpen ? "rotate-45 translate-y-2.5" : ""
-              }`}></span>
-              <span className={`w-full h-0.5 bg-white rounded transition-all duration-300 ${
-                isMenuOpen ? "opacity-0" : "opacity-100"
-              }`}></span>
-              <span className={`w-full h-0.5 bg-white rounded transform transition-all duration-300 ${
-                isMenuOpen ? "-rotate-45 -translate-y-2.5" : ""
-              }`}></span>
-              
-            </div>
-          </button>
-          
-        </div>
-        
-      </div>
-      
-
-      {/* Mobile Menu - Slides down when open */}
-      
-      <div className={`md:hidden overflow-hidden transition-all duration-500 ease-in-out ${
-        isMenuOpen ? "max-h-96 opacity-100 mt-4" : "max-h-0 opacity-0"
-        
-      }`}>
-        
-        <ul className="flex flex-col space-y-3 pb-4">
-          
+        <div className="hidden items-center gap-2 md:flex">
           {user ? (
-            navLinks.map((link) => (
-              <li key={link.to}>
-                <Link
-                  to={link.to}
-                  className={`${linkBaseClasses} ${linkHoverClasses} block text-center py-3 ${
-                    location.pathname === link.to ? linkActiveClasses : ""
-                  }`}
-                >
-                  {link.label}
-                  <span className={`${underlineClasses} left-1/2 transform -translate-x-1/2 group-hover:w-3/4`}></span>
-                </Link>
-              </li>
-            ))
+            <>
+              <div ref={bellRef} className="relative">
+                <button onClick={openNotifications} className="relative rounded-lg p-2 text-gray-700 hover:bg-gray-50" title="Notifications">
+                  <Bell size={19} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 rounded-full bg-orange-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+                {notificationsOpen && (
+                  <div className="absolute right-0 top-12 w-80 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
+                    <div className="border-b border-gray-100 px-4 py-3">
+                      <p className="font-black text-gray-950">Notifications</p>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.slice(0, 6).map((notification) => (
+                        <Link key={notification._id} to={notificationLink(notification)} className="block border-b border-gray-100 px-4 py-3 hover:bg-orange-50">
+                          <p className="text-sm font-bold text-gray-900">{notificationText(notification)}</p>
+                          <p className="mt-1 text-xs font-semibold text-gray-500">{new Date(notification.createdAt).toLocaleString()}</p>
+                        </Link>
+                      ))}
+                      {notifications.length === 0 && <p className="px-4 py-6 text-sm text-gray-500">No notifications yet.</p>}
+                    </div>
+                    <Link to="/notifications" className="block bg-gray-50 px-4 py-3 text-center text-sm font-black text-orange-700 hover:bg-orange-50">
+                      View All Notifications
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              <div ref={menuRef} className="relative">
+                <button onClick={() => setUserMenuOpen((value) => !value)} className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-50">
+                  <Avatar profile={user} />
+                  <span className="text-sm font-semibold text-gray-600">{user.username}</span>
+                  <ChevronDown size={16} className="text-gray-500" />
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
+                    <MenuLink to="/profile" icon={User} label="My Profile" />
+                    <MenuLink to="/writer-dashboard" icon={LayoutDashboard} label="Writer Dashboard" />
+                    <MenuLink to="/library" icon={Library} label="Library" />
+                    <MenuLink to="/settings" icon={Settings} label="Settings" />
+                    <button onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-red-700 hover:bg-red-50">
+                      <LogOut size={17} />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
             <>
-              <li>
-                <Link
-                  to="/login"
-                  className="bg-white text-indigo-600 px-4 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105 active:scale-95 block text-center mx-4"
-                >
-                  Login
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/Register"
-                  className="bg-white text-indigo-600 px-4 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105 active:scale-95 block text-center mx-4"
-                >
-                  Register
-                </Link>
-              </li>
+              <Link to="/login" className="rounded-lg px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">
+                Login
+              </Link>
+              <Link to="/Register" className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-3 py-2 text-sm font-bold text-white hover:bg-orange-700">
+                <UserPlus size={16} />
+                Join
+              </Link>
             </>
           )}
-           {user && (
-            <button
-              onClick={() => logout()}
-              className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 text-sm"
-            >
-              Logout
-            </button>
-          )}
-        </ul>
+        </div>
+
+        <button className="rounded-lg p-2 md:hidden" onClick={() => setOpen((value) => !value)}>
+          {open ? <X /> : <Menu />}
+        </button>
       </div>
-    </nav>
+
+      {open && (
+        <div className="border-t border-orange-100 px-4 py-3 md:hidden">
+          <nav className="flex flex-col gap-2">
+            {navLinks.map((link) => (
+              <Link key={link.to} to={link.to} className="rounded-lg px-3 py-2 font-bold text-gray-700">
+                {link.label}
+              </Link>
+            ))}
+            {user ? (
+              <>
+                <Link to="/profile" className="rounded-lg px-3 py-2 font-bold text-gray-700">My Profile</Link>
+                <Link to="/notifications" className="rounded-lg px-3 py-2 font-bold text-gray-700">Notifications</Link>
+                <Link to="/writer-dashboard" className="rounded-lg px-3 py-2 font-bold text-gray-700">Writer Dashboard</Link>
+                <Link to="/settings" className="rounded-lg px-3 py-2 font-bold text-gray-700">Settings</Link>
+                <button onClick={handleLogout} className="rounded-lg bg-gray-900 px-3 py-2 font-bold text-white">Logout</button>
+              </>
+            ) : (
+              <Link to="/Register" className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-3 py-2 font-bold text-white">
+                <PenLine size={16} />
+                Start writing
+              </Link>
+            )}
+          </nav>
+        </div>
+      )}
+    </header>
   );
 };
+
+function MenuLink({ to, icon: Icon, label }) {
+  return (
+    <Link to={to} className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-orange-50 hover:text-orange-700">
+      <Icon size={17} />
+      {label}
+    </Link>
+  );
+}
 
 export default Header;

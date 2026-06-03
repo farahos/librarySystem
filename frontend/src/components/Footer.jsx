@@ -1,7 +1,7 @@
 // src/components/Footer.jsx
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../hooks/useUser";
-import { useState } from "react";
 
 const Footer = () => {
   const { user } = useUser();

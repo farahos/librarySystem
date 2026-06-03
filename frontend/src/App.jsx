@@ -1,46 +1,32 @@
-// src/App.jsx
+import React, { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import { useUser } from "./hooks/useUser";
 
 export default function App() {
-  const { user } = useUser();
+  const { isAdmin } = useUser();
 
-  // Haddii weli aan la helin user (ama loading state), waxaad soo celin kartaa
-  // spinner ama <Outlet /> kaliya si aanay u dhicin flicker.
-  if (!user) {
-    return (
-      <>
-     <Header />
-      <Outlet />
-      </>
-    )
-  }
+  useEffect(() => {
+    const darkMode = localStorage.getItem("madalDarkMode") === "true";
+    document.documentElement.classList.toggle("dark", darkMode);
+  }, []);
 
-  // Haddii uu yahay admin -> Sidebar layout
-  if (user.role === "admin") {
+  if (isAdmin) {
     return (
-      <div className="flex">
+      <div className="min-h-screen bg-gray-50">
         <Sidebar />
-        <main className="flex-1 p-4 ml-0 md:ml-64">
+        <main className="md:ml-64">
           <Outlet />
         </main>
       </div>
     );
   }
 
-  // Haddii uu yahay user caadi ah -> Header layout
-  if (user.role === "user") {
-    return (
-      <>
-        <Header />
-        
-          <Outlet />
-      </>
-    );
-  }
-
-  // Default (haddii role kale ama empty)
-  return <Outlet />;
+  return (
+    <>
+      <Header />
+      <Outlet />
+    </>
+  );
 }

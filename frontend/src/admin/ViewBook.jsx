@@ -1,123 +1,61 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
-import { View } from "lucide-react";
+import { apiClient, storyAuthor, storyCover } from "../lib/apiClient";
 
 const ViewBook = () => {
-  const [posts, setPosts] = useState([]);
-  const token = localStorage.getItem("token");
+  const [stories, setStories] = useState([]);
 
-  const fetchPosts = async () => {
-    const { data } = await axios.get("/api/post/getPosts");
-    setPosts(data);
+  const fetchStories = async () => {
+    const { data } = await apiClient.get("/stories", { params: { includePrivate: "true", limit: 100 } });
+    setStories(data.stories || []);
   };
 
-  const deletePost = async (id) => {
-    if (!window.confirm("Delete this post?")) return;
-    try {
-      await axios.delete(`/api/post/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setPosts((prev) => prev.filter((p) => p._id !== id));
-    } catch (err) {
-      console.error(err.response?.data || err);
-      alert("Delete failed");
-    }
+  const archiveStory = async (id) => {
+    if (!window.confirm("Archive this story?")) return;
+    await apiClient.delete(`/stories/${id}`);
+    setStories((current) => current.filter((story) => story._id !== id));
   };
 
   useEffect(() => {
-    fetchPosts();
+    fetchStories();
   }, []);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-          All Posts
-        </h1>
-        <Link
-          to="/addbook"
-          className="bg-gradient-to-r from-green-600 to-emerald-500 
-                     text-white px-5 py-2 rounded-xl shadow hover:scale-105 
-                     transition-transform duration-200"
-        >
-          + New Post
-        </Link>
-      </div>
-
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {posts.map((p) => (
-          <div
-            key={p._id}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden
-                       hover:shadow-xl transition-shadow duration-300 h-[650px] flex flex-col"
-          >
-            {/* Image part - taller like a book cover */}
-            {p.image && (
-              <div className="h-[350px] w-full overflow-hidden">
-                <img
-                  src={p.image}
-                  alt={p.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-
-            {/* Content part */}
-            <div className="p-5 flex flex-col flex-1">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                {p.title}
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                Author: {p.author}
-              </p>
-              <p className="text-gray-700 dark:text-gray-200 mb-3 flex-1 overflow-hidden">
-                {p.content}
-              </p>
-
-              {/* PDF download */}
-              {p.pdf && (
-                <a
-                  href={p.pdf}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 text-indigo-600 dark:text-indigo-400 underline"
-                >
-                  Download PDF
-                </a>
-              )}
-              {/* Audio play */}
-              {p.audio && (
-                <audio controls className="mt-2 w-full">
-                  <source src={p.audio} type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
-              )}
-              
-              {/* Edit & Delete Buttons */}
-              <div className="mt-4 flex gap-3">
-                <Link
-                  to={`/edit/${p._id}`}
-                  className="flex-1 text-center bg-yellow-500 hover:bg-yellow-600
-                             text-white px-3 py-2 rounded-lg transition-colors duration-200"
-                >
-                  Edit
-                </Link>
-                <button
-                  onClick={() => deletePost(p._id)}
-                  className="flex-1 text-center bg-red-600 hover:bg-red-700
-                             text-white px-3 py-2 rounded-lg transition-colors duration-200"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
+    <main className="min-h-screen bg-gray-50 px-4 py-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-wide text-orange-600">Admin</p>
+            <h1 className="text-4xl font-black text-gray-950">Stories</h1>
           </div>
-        ))}
+          <Link to="/addbook" className="rounded-lg bg-orange-600 px-4 py-3 font-black text-white">
+            New Story
+          </Link>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {stories.map((story) => (
+            <article key={story._id} className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+              <img src={storyCover(story)} alt={story.title} className="h-56 w-full object-cover" />
+              <div className="p-4">
+                <h3 className="text-xl font-black text-gray-950">{story.title}</h3>
+                <p className="mt-1 text-sm font-semibold text-gray-500">{storyAuthor(story)}</p>
+                <p className="mt-3 line-clamp-3 text-sm text-gray-600">{story.description}</p>
+                <div className="mt-4 flex gap-2">
+                  <Link to={`/story/${story.slug}`} className="flex-1 rounded-lg bg-gray-950 px-3 py-2 text-center text-sm font-bold text-white">
+                    View
+                  </Link>
+                  <button onClick={() => archiveStory(story._id)} className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white">
+                    Archive
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
-    </div>
+    </main>
   );
 };
 
 export default ViewBook;
-

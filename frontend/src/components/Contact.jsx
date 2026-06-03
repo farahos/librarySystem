@@ -1,270 +1,189 @@
-// src/components/Contact.jsx
-import { useState } from "react";
+import React, { useState } from "react";
+import { BookOpen, Building2, Mail, MessageSquare, Send, ShieldQuestion } from "lucide-react";
 import { Link } from "react-router-dom";
+
+const contactMethods = [
+  {
+    title: "Support",
+    detail: "support@madal.so",
+    text: "Questions about accounts, reading, publishing, or reports.",
+    icon: Mail,
+  },
+  {
+    title: "Writers",
+    detail: "writers@madal.so",
+    text: "Verification, originals, publishing help, and creator partnerships.",
+    icon: BookOpen,
+  },
+  {
+    title: "Moderation",
+    detail: "safety@madal.so",
+    text: "Report urgent safety, copyright, or community guideline issues.",
+    icon: ShieldQuestion,
+  },
+  {
+    title: "Partnerships",
+    detail: "partners@madal.so",
+    text: "Sponsorships, institutions, publishers, and cultural projects.",
+    icon: Building2,
+  },
+];
+
+const faqs = [
+  {
+    question: "Can I publish Somali stories on Madal?",
+    answer: "Yes. Create an account as a writer, open Write, and publish your story with a first chapter.",
+  },
+  {
+    question: "Does Madal support audio chapters?",
+    answer: "Yes. The platform already supports audio URLs per chapter, with file upload planned for production.",
+  },
+  {
+    question: "How do verified writers work?",
+    answer: "Writers can request verification. Admins review quality, consistency, and moderation history before approval.",
+  },
+  {
+    question: "How do I report content?",
+    answer: "The backend includes report and moderation tools. Dedicated frontend report buttons can be added to story and comment views next.",
+  },
+];
 
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     subject: "",
-    message: ""
+    message: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  const handleChange = (event) => {
+    setFormData((current) => ({ ...current, [event.target.name]: event.target.value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsSubmitting(false);
+  const handleSubmit = (event) => {
+    event.preventDefault();
     setIsSubmitted(true);
     setFormData({ name: "", email: "", subject: "", message: "" });
-    
-    setTimeout(() => setIsSubmitted(false), 5000);
+    setTimeout(() => setIsSubmitted(false), 4000);
   };
 
-  const contactMethods = [
-    {
-      icon: "📧",
-      title: "Email Us",
-      details: "support@booksystem.com",
-      description: "Send us an email anytime"
-    },
-    {
-      icon: "📞",
-      title: "Call Us",
-      details: "+1 (555) 123-4567",
-      description: "Mon to Fri, 9am to 6pm"
-    },
-    {
-      icon: "💬",
-      title: "Live Chat",
-      details: "Start Chat",
-      description: "Instant support 24/7"
-    },
-    {
-      icon: "📍",
-      title: "Visit Us",
-      details: "123 Book Street, Library City",
-      description: "Feel free to visit our office"
-    }
-  ];
-
-  const faqs = [
-    {
-      question: "How do I reset my password?",
-      answer: "You can reset your password from the login page by clicking 'Forgot Password'."
-    },
-    {
-      question: "Can I download books for offline reading?",
-      answer: "Yes, most books are available for download. Look for the download icon on the book page."
-    },
-    {
-      question: "Is there a mobile app available?",
-      answer: "Our mobile app is available on both iOS and Android platforms."
-    },
-    {
-      question: "How can I become an author on your platform?",
-      answer: "Visit our 'Become an Author' page to submit your work for review."
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 tracking-tight">
-            Get In <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-gray-600">Touch</span>
+    <main className="min-h-screen bg-gray-50">
+      <section className="relative overflow-hidden bg-gray-950 text-white">
+        <img
+          src="https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=1800&q=80"
+          alt="Newspaper and notebook on a desk"
+          className="absolute inset-0 h-full w-full object-cover opacity-35"
+        />
+        <div className="relative mx-auto flex min-h-[420px] max-w-7xl flex-col justify-end px-4 pb-14 pt-20">
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-orange-300">Contact Madal</p>
+          <h1 className="mt-4 max-w-3xl text-5xl font-black leading-tight md:text-7xl">
+            Let us help your story find its place.
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-100">
+            Reach out for support, writer help, moderation questions, or partnerships around Somali storytelling.
           </p>
         </div>
+      </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Contact Information */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-3xl p-8 shadow-2xl border border-gray-100 sticky top-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">Contact Information</h2>
-              
-              <div className="space-y-6 mb-8">
-                {contactMethods.map((method, index) => (
-                  <div 
-                    key={method.title}
-                    className="flex items-start space-x-4 p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 group cursor-pointer"
-                  >
-                    <div className="w-12 h-12 bg-gradient-to-r from-indigo-300 to-gray-400 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300">
-                      {method.icon}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 text-lg">{method.title}</h3>
-                      <p className="text-indigo-600 font-medium">{method.details}</p>
-                      <p className="text-gray-500 text-sm">{method.description}</p>
-                    </div>
-                  </div>
-                ))}
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-12 lg:grid-cols-[380px_1fr]">
+        <aside className="space-y-4">
+          {contactMethods.map((method) => (
+            <div key={method.title} className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex gap-4">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-orange-600 text-white">
+                  <method.icon size={20} />
+                </span>
+                <div>
+                  <h2 className="font-black text-gray-950">{method.title}</h2>
+                  <p className="mt-1 font-bold text-orange-700">{method.detail}</p>
+                  <p className="mt-2 text-sm leading-6 text-gray-600">{method.text}</p>
+                </div>
               </div>
+            </div>
+          ))}
+        </aside>
 
-              {/* Social Links */}
+        <div className="space-y-8">
+          <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-orange-100 text-orange-700">
+                <MessageSquare size={22} />
+              </span>
               <div>
-                <h3 className="font-semibold text-gray-900 mb-4">Follow Us</h3>
-                <div className="flex space-x-4">
-                  {["📘", "🐦", "📷", "💼"].map((icon, index) => (
-                    <div 
-                      key={index}
-                      className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer hover:bg-indigo-100 hover:scale-110 transition-all duration-300"
-                    >
-                      <span className="text-lg">{icon}</span>
-                    </div>
-                  ))}
-                </div>
+                <h2 className="text-2xl font-black text-gray-950">Send a Message</h2>
+                <p className="text-gray-600">This form is ready for a future backend contact endpoint.</p>
               </div>
             </div>
-          </div>
 
-          {/* Contact Form & FAQ */}
-          <div className="lg:col-span-2">
-            {/* Contact Form */}
-            <div className="bg-white rounded-3xl p-8 shadow-2xl border border-gray-100 mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Send us a Message</h2>
-              <p className="text-gray-600 mb-8">Fill out the form below and we'll get back to you soon.</p>
-
-              {isSubmitted && (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 animate-pulse">
-                  <div className="flex items-center space-x-2 text-green-700">
-                    <span className="text-lg">✅</span>
-                    <span className="font-semibold">Message sent successfully! We'll get back to you soon.</span>
-                  </div>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address *
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
-                      placeholder="Enter your email"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Subject *
-                  </label>
-                  <input
-                    type="text"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
-                    placeholder="What is this regarding?"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Message *
-                  </label>
-                  <textarea
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    required
-                    rows="6"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 resize-none"
-                    placeholder="Tell us how we can help you..."
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className={`w-full bg-gradient-to-r from-indigo-500 to-gray-600 text-white py-4 px-6 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 active:scale-95 ${
-                    isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:shadow-xl"
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Sending Message...</span>
-                    </div>
-                  ) : (
-                    "Send Message"
-                  )}
-                </button>
-              </form>
-            </div>
-
-            {/* FAQ Section */}
-            <div className="bg-white rounded-3xl p-8 shadow-2xl border border-gray-100">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Frequently Asked Questions</h2>
-              <p className="text-gray-600 mb-8">Quick answers to common questions</p>
-
-              <div className="space-y-4">
-                {faqs.map((faq, index) => (
-                  <div 
-                    key={index}
-                    className="border border-gray-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-md transition-all duration-300 group cursor-pointer"
-                  >
-                    <h3 className="font-semibold text-gray-900 text-lg mb-2 group-hover:text-indigo-600 transition-colors duration-300">
-                      {faq.question}
-                    </h3>
-                    <p className="text-gray-600">{faq.answer}</p>
-                  </div>
-                ))}
+            {isSubmitted && (
+              <div className="mt-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 font-bold text-green-700">
+                Message received locally. Contact API can be connected next.
               </div>
+            )}
 
-              <div className="text-center mt-8 pt-6 border-t border-gray-200">
-                <p className="text-gray-600 mb-4">Still have questions?</p>
-                <Link
-                  to="/help"
-                  className="inline-flex items-center space-x-2 text-indigo-600 font-semibold hover:text-indigo-700 transition-colors duration-300"
-                >
-                  <span>Visit Help Center</span>
-                  <span>→</span>
-                </Link>
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Full name" name="name" value={formData.name} onChange={handleChange} />
+                <Field label="Email address" name="email" type="email" value={formData.email} onChange={handleChange} />
               </div>
+              <Field label="Subject" name="subject" value={formData.subject} onChange={handleChange} />
+              <label className="block text-sm font-bold text-gray-700">
+                Message
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  rows={7}
+                  required
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  placeholder="Tell us how we can help..."
+                />
+              </label>
+              <button className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-5 py-3 font-black text-white hover:bg-orange-700">
+                <Send size={18} />
+                Send Message
+              </button>
+            </form>
+          </section>
+
+          <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="text-2xl font-black text-gray-950">Common Questions</h2>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              {faqs.map((faq) => (
+                <div key={faq.question} className="rounded-lg bg-gray-50 p-4">
+                  <h3 className="font-black text-gray-950">{faq.question}</h3>
+                  <p className="mt-2 leading-7 text-gray-600">{faq.answer}</p>
+                </div>
+              ))}
             </div>
-          </div>
+            <div className="mt-6 border-t border-gray-100 pt-5">
+              <Link to="/Books" className="font-black text-orange-700 hover:text-orange-800">
+                Explore stories while we respond
+              </Link>
+            </div>
+          </section>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
+
+function Field({ label, name, value, onChange, type = "text" }) {
+  return (
+    <label className="block text-sm font-bold text-gray-700">
+      {label}
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        required
+        className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+      />
+    </label>
+  );
+}
 
 export default Contact;

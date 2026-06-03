@@ -1,0 +1,74 @@
+openapi: 3.0.1
+info:
+  title: Madal API
+  version: 0.1.0
+  description: OpenAPI spec for Madal minimal endpoints
+servers:
+  - url: http://localhost:3000/api/v1
+paths:
+  /auth/signup:
+    post:
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: success
+  /auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: success
+  /stories:
+    get:
+      summary: List stories
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: list
+    post:
+      summary: Create story
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+      responses:
+        '201':
+          description: created
+  /stories/{slug}:
+    get:
+      summary: Get story by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: story

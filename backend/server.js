@@ -1,31 +1,45 @@
-import express from 'express';
-import { connect } from 'mongoose';
-import conectBD from './config/db.js';
-import { registerUser } from './controller/UserController.js';
-import userRouter from './routes/UserRoute.js';
-import postRouter from './routes/PostRoute.js';
-import cookieParser from 'cookie-parser';
-import cors from 'cors'
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import express from "express";
+import { corsOptions } from "./src/config/cors.js";
+import { connectDb } from "./src/config/db.js";
+import { env } from "./src/config/env.js";
+import routes from "./src/routes/index.js";
+
 const app = express();
-const PORT = 8000
 
+app.use(cors(corsOptions));
 
-app.use(cors({
-  origin: 'https://librarysystem-r0al.onrender.com', // frontend origin
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true // haddii aad isticmaalayso cookies / credentials
-}));
-
-
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use('/api/user', userRouter);
-app.use('/api/post', postRouter);
+app.get("/", (req, res) => {
+  res.json({
+    ok: true,
+    service: "madal-backend",
+    slogan: "Read. Listen. Write Stories.",
+  });
+});
 
-conectBD();
-app.listen(PORT ,()=>{
-    console.log(`Server is running on port ${PORT}`);
+app.use("/api/v1", routes);
 
-})
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ message: "Server error" });
+});
+
+connectDb()
+  .then(() => {
+    app.listen(env.port, () => console.log(`Madal backend running on port ${env.port}`));
+  })
+  .catch((err) => {
+    console.error("Mongo connect error", err);
+    process.exit(1);
+  });
+
+export default app;
