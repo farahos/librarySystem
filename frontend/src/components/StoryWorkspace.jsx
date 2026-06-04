@@ -9,7 +9,6 @@ const blankChapter = {
   title: "",
   chapterNumber: 1,
   content: "",
-  audioUrl: "",
   status: "draft",
   scheduledFor: "",
 };
@@ -23,7 +22,6 @@ export default function StoryWorkspace() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingChapterId, setEditingChapterId] = useState("");
   const [form, setForm] = useState(blankChapter);
-  const [audioFile, setAudioFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -70,34 +68,21 @@ export default function StoryWorkspace() {
 
   const openNewChapter = () => {
     setEditingChapterId("");
-    setAudioFile(null);
-    setForm({ ...blankChapter, title: `Chapter ${nextChapterNumber}`, chapterNumber: nextChapterNumber });
+    setForm({ ...blankChapter, title: "", chapterNumber: nextChapterNumber });
     setEditorOpen(true);
   };
 
   const openEditChapter = (chapter) => {
     setEditingChapterId(chapter._id);
-    setAudioFile(null);
     setForm({
       title: chapter.title || "",
       chapterNumber: chapter.chapterNumber || 1,
       content: chapter.content || "",
-      audioUrl: chapter.audio?.url || "",
       status: chapter.status || "draft",
       scheduledFor: chapter.scheduledFor ? new Date(chapter.scheduledFor).toISOString().slice(0, 16) : "",
     });
     setEditorOpen(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const uploadAudio = async () => {
-    if (!audioFile) return form.audioUrl;
-    const formData = new FormData();
-    formData.append("file", audioFile);
-    const { data } = await apiClient.post("/uploads/audio", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return data.secureUrl;
   };
 
   const saveChapter = async (event) => {
@@ -107,14 +92,12 @@ export default function StoryWorkspace() {
 
     setSaving(true);
     try {
-      const uploadedAudioUrl = await uploadAudio();
       const payload = {
         title: form.title,
         chapterNumber: Number(form.chapterNumber),
         content: form.content,
         status: form.status,
         scheduledFor: form.status === "scheduled" ? form.scheduledFor || undefined : undefined,
-        audio: uploadedAudioUrl ? { source: "upload", url: uploadedAudioUrl } : { source: "none" },
       };
 
       if (editingChapterId) {
@@ -258,18 +241,6 @@ export default function StoryWorkspace() {
                 required
               />
             </label>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <Input label="Audio URL optional" value={form.audioUrl} onChange={(value) => setForm((current) => ({ ...current, audioUrl: value }))} />
-              <label className="block text-sm font-bold text-gray-700">
-                Audio file optional
-                <input
-                  type="file"
-                  accept="audio/mp3,audio/mpeg,audio/wav,audio/m4a,audio/mp4"
-                  onChange={(event) => setAudioFile(event.target.files?.[0] || null)}
-                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-3 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-orange-600 file:px-3 file:py-2 file:font-bold file:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-                />
-              </label>
-            </div>
             <button disabled={saving} className="mt-5 rounded-lg bg-orange-600 px-5 py-3 font-black text-white hover:bg-orange-700 disabled:bg-orange-300">
               {saving ? "Saving..." : "Save Chapter"}
             </button>

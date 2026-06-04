@@ -282,6 +282,10 @@ export async function reader(req, res) {
     const currentIndex = chapters.findIndex((item) => Number(item.chapterNumber) === chapterNumber);
     const previousChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
     const nextChapter = currentIndex >= 0 && currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
+    const totalChapters = chapters.length;
+    const currentChapterIndex = currentIndex >= 0 ? currentIndex + 1 : 1;
+    const remainingChapters = Math.max(totalChapters - currentChapterIndex, 0);
+    const progressPercent = totalChapters > 0 ? Math.round((currentChapterIndex / totalChapters) * 100) : 0;
 
     if (req.user?._id) {
       await Interaction.findOneAndUpdate(
@@ -294,15 +298,18 @@ export async function reader(req, res) {
           metadata: {
             chapterId: chapter._id,
             chapterNumber,
-            progress: Number(req.query.progress || 0),
-            progressPercent: Number(req.query.progress || 0),
+            progress: progressPercent,
+            progressPercent,
+            currentChapterIndex,
+            totalChapters,
+            remainingChapters,
           },
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
     }
 
-    res.json({ story, chapter, chapters, previousChapter, nextChapter });
+    res.json({ story, chapter, chapters, previousChapter, nextChapter, progressPercent, currentChapterIndex, totalChapters, remainingChapters });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

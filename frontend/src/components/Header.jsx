@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Bell, BookOpen, ChevronDown, LayoutDashboard, Library, LogOut, Menu, PenLine, Settings, User, UserPlus, X } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Bell, BookOpen, ChevronDown, LayoutDashboard, Library, LogOut, Menu, PenLine, Search, Settings, User, UserPlus, X } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../hooks/useUser";
 import { apiClient, madalLogo } from "../lib/apiClient";
@@ -27,7 +27,7 @@ const Header = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const loadNotifications = () => {
+  const loadNotifications = useCallback(() => {
     if (!user) return;
     apiClient
       .get("/notifications", { params: { limit: 8 } })
@@ -39,7 +39,7 @@ const Header = () => {
         setNotifications([]);
         setUnreadCount(0);
       });
-  };
+  }, [user]);
 
   useEffect(() => {
     setOpen(false);
@@ -54,7 +54,7 @@ const Header = () => {
       return;
     }
     loadNotifications();
-  }, [user, location.pathname]);
+  }, [user, location.pathname, loadNotifications]);
 
   useEffect(() => {
     const closeFloating = (event) => {
@@ -172,9 +172,29 @@ const Header = () => {
           )}
         </div>
 
-        <button className="rounded-lg p-2 md:hidden" onClick={() => setOpen((value) => !value)}>
-          {open ? <X /> : <Menu />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <Link to="/Books" className="rounded-lg p-2 text-gray-950 hover:bg-orange-50" aria-label="Search stories">
+            <Search size={22} />
+          </Link>
+          {!user && (
+            <Link to="/login" className="px-2 py-2 text-sm font-black uppercase text-gray-950">
+              Sign in
+            </Link>
+          )}
+          {user && (
+            <Link to="/notifications" className="relative rounded-lg p-2 text-gray-950 hover:bg-orange-50" aria-label="Notifications">
+              <Bell size={21} />
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 rounded-full bg-orange-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </Link>
+          )}
+          <button className="rounded-lg p-2 text-gray-950" onClick={() => setOpen((value) => !value)} aria-label="Open menu">
+            {open ? <X /> : <Menu />}
+          </button>
+        </div>
       </div>
 
       {open && (
@@ -206,10 +226,11 @@ const Header = () => {
   );
 };
 
-function MenuLink({ to, icon: Icon, label }) {
+function MenuLink({ to, icon, label }) {
+  const MenuIcon = icon;
   return (
     <Link to={to} className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-orange-50 hover:text-orange-700">
-      <Icon size={17} />
+      <MenuIcon size={17} />
       {label}
     </Link>
   );

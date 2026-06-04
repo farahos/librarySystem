@@ -9,6 +9,13 @@
   --madal-toast-border: #fed7aa;
 }
 
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 html.dark {
   color-scheme: dark;
   background: #0f1117;
@@ -81,4 +88,12 @@ html.dark .hover\:bg-gray-50:hover,
 html.dark .hover\:bg-orange-50:hover,
 html.dark .hover\:bg-gray-100:hover {
   background-color: #1f2937 !important;
+}
+
+.madal-scrollbar-hide {
+  scrollbar-width: none;
+}
+
+.madal-scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { apiClient } from "../lib/apiClient";
 import StoryCard from "./StoryCard";
 
@@ -19,11 +20,12 @@ const fallbackCategories = [
 ];
 
 const Books = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [stories, setStories] = useState([]);
   const [categories, setCategories] = useState(fallbackCategories);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(searchParams.get("category") || "");
   const [sort, setSort] = useState("new");
 
   useEffect(() => {
@@ -52,6 +54,19 @@ const Books = () => {
       .finally(() => setLoading(false));
   }, [sort, category]);
 
+  useEffect(() => {
+    const queryCategory = searchParams.get("category") || "";
+    setCategory(queryCategory);
+  }, [searchParams]);
+
+  const selectCategory = (value) => {
+    setCategory(value);
+    const nextParams = new URLSearchParams(searchParams);
+    if (value) nextParams.set("category", value);
+    else nextParams.delete("category");
+    setSearchParams(nextParams);
+  };
+
   const filteredStories = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     return stories.filter((story) => {
@@ -71,7 +86,7 @@ const Books = () => {
           <p className="text-sm font-bold uppercase tracking-wide text-orange-600">Discover</p>
           <h1 className="mt-2 text-4xl font-black text-gray-950">Somali Stories</h1>
           <p className="mt-3 max-w-2xl text-gray-600">
-            Browse stories, originals, audio chapters, and writers from the Madal community.
+            Browse stories, originals, fresh chapters, and writers from the Madal community.
           </p>
         </div>
 
@@ -87,7 +102,7 @@ const Books = () => {
           </div>
           <select
             value={category}
-            onChange={(event) => setCategory(event.target.value)}
+            onChange={(event) => selectCategory(event.target.value)}
             className="rounded-lg border border-gray-200 bg-white px-3 py-3 outline-none focus:border-orange-500"
           >
             {categories.map((item) => (

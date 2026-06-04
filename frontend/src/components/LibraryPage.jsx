@@ -25,6 +25,15 @@ const config = {
   },
 };
 
+function readingProgress(item) {
+  const percent = Math.min(Math.max(Math.round(Number(item.progressPercent ?? item.progress ?? 0)), 0), 100);
+  const current = Number(item.currentChapterIndex || item.chapter?.chapterNumber || item.chapterNumber || 1);
+  const total = Number(item.totalChapters || 0);
+  const remaining = Number(item.remainingChapters ?? Math.max(total - current, 0));
+
+  return { percent, current, total, remaining };
+}
+
 export default function LibraryPage({ type = "bookmarks" }) {
   const page = config[type] || config.bookmarks;
   const [items, setItems] = useState([]);
@@ -73,7 +82,7 @@ export default function LibraryPage({ type = "bookmarks" }) {
         {!loading && !error && items.length > 0 && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((item) => {
-              const progress = item.progressPercent ?? item.progress ?? 0;
+              const progress = readingProgress(item);
               const chapterNumber = item.chapter?.chapterNumber || item.chapterNumber || 1;
               const lastDate = item.lastOpenedAt || item.interaction?.createdAt;
               return (
@@ -84,12 +93,17 @@ export default function LibraryPage({ type = "bookmarks" }) {
                   {type === "continue-reading" && (
                     <>
                       <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
-                        <div className="h-full rounded-full bg-orange-600" style={{ width: `${Math.min(Math.max(progress, 0), 100)}%` }} />
+                        <div className="h-full rounded-full bg-orange-600" style={{ width: `${progress.percent}%` }} />
                       </div>
                       <div className="mt-2 flex items-center justify-between gap-3 text-xs font-bold text-gray-500">
-                        <span>{progress}% complete</span>
+                        <span>{progress.percent}% complete</span>
                         {lastDate && <span>{new Date(lastDate).toLocaleDateString()}</span>}
                       </div>
+                      {progress.total > 0 && (
+                        <p className="mt-1 text-xs font-semibold text-gray-500">
+                          Chapter {progress.current} of {progress.total} - {progress.remaining} left
+                        </p>
+                      )}
                       <Link
                         to={`/read/${item.story._id}/${chapterNumber}`}
                         className="mt-3 inline-flex rounded-lg bg-orange-600 px-3 py-2 font-black text-white hover:bg-orange-700"

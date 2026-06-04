@@ -1,215 +1,145 @@
-// src/components/Footer.jsx
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { useUser } from "../hooks/useUser";
+import { Facebook, Instagram, MessageCircle, Send, Twitter, Youtube } from "lucide-react";
+import { madalLogo } from "../lib/apiClient";
 
-const Footer = () => {
-  const { user } = useUser();
-  const [email, setEmail] = useState("");
-  const [isSubscribed, setIsSubscribed] = useState(false);
+const storyLinks = [
+  ["Trending Stories", "/Books?sort=trending"],
+  ["Recently Updated", "/Books?sort=recently-updated"],
+  ["Madal Originals", "/Books?sort=featured"],
+  ["Popular This Week", "/Books?sort=weekly"],
+  ["New Stories", "/Books?sort=new"],
+];
 
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    if (email) {
-      setIsSubscribed(true);
-      setEmail("");
-      setTimeout(() => setIsSubscribed(false), 3000);
-    }
-  };
+const genreLinks = [
+  ["Romance", "/Books?category=romance"],
+  ["Drama", "/Books?category=drama"],
+  ["Mystery", "/Books?category=mystery"],
+  ["Poetry", "/Books?category=poetry"],
+  ["Islamic", "/Books?category=islamic"],
+];
 
+const readerLinks = [
+  ["Library", "/library"],
+  ["Bookmarks", "/library/bookmarks"],
+  ["Reading History", "/library/history"],
+  ["Reading Lists", "/library/lists"],
+  ["Browse Stories", "/Books"],
+];
+
+const communityLinks = [
+  ["About Madal", "/About"],
+  ["Contact", "/Contact"],
+  ["Start Writing", "/create"],
+  ["Writer Dashboard", "/writer-dashboard"],
+  ["Profile", "/profile"],
+];
+
+const socials = [
+  ["Instagram", Instagram],
+  ["TikTok", Send],
+  ["Facebook", Facebook],
+  ["YouTube", Youtube],
+  ["Community", MessageCircle],
+  ["X", Twitter],
+];
+
+export default function Footer() {
   const currentYear = new Date().getFullYear();
 
-  const footerLinks = {
-    navigation: [
-      { to: "/Home", label: "Home" },
-      { to: "/Books", label: "Books" },
-      { to: "/Booked", label: "My Books" },
-    ],
-    support: [
-      { to: "/help", label: "Help Center" },
-      { to: "/contact", label: "Contact Us" },
-      { to: "/privacy", label: "Privacy Policy" },
-      { to: "/terms", label: "Terms of Service" },
-    ],
-    social: [
-      { name: "Facebook", icon: "📘", url: "#" },
-      { name: "Twitter", icon: "🐦", url: "#" },
-      { name: "Instagram", icon: "📷", url: "#" },
-      { name: "LinkedIn", icon: "💼", url: "#" },
-    ],
-  };
-
-  const linkBaseClasses = "relative group transition-all duration-300 hover:text-yellow-300";
-  const underlineClasses = "absolute left-0 -bottom-1 w-0 h-0.5 bg-yellow-300 transition-all group-hover:w-full";
-
   return (
-    <footer className="bg-gradient-to-r from-indigo-300 to-gray-700 text-white shadow-2xl mt-auto">
-      {/* Main Footer Content */}
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-          
-          {/* Brand Section */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center space-x-3 mb-4">
-              <span className="text-4xl">📚</span>
-              <h3 className="text-2xl font-extrabold tracking-wider">Book System</h3>
-            </div>
-            <p className="text-white/80 mb-6 leading-relaxed">
-              Discover your next favorite book in our extensive collection. 
-              Read, explore, and embark on literary adventures with us.
+    <footer className="mt-auto border-t border-gray-200 bg-white text-gray-950">
+      <section className="border-b border-gray-200 bg-gray-50 px-4 py-10">
+        <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <h2 className="text-2xl font-black">Join Madal on socials</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
+              Follow Somali stories, new chapters, writer updates, and reader conversations.
             </p>
-            
-            {/* Social Links */}
-            <div className="flex space-x-4">
-              {footerLinks.social.map((social) => (
-                <a
-                  key={social.name}
-                  href={social.url}
-                  className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center transition-all duration-300 hover:bg-yellow-300 hover:scale-110 hover:shadow-lg transform hover:-translate-y-1"
-                  aria-label={social.name}
-                >
-                  <span className="text-lg">{social.icon}</span>
-                </a>
-              ))}
-            </div>
           </div>
-
-          {/* Quick Links */}
-          <div className="lg:col-span-1">
-            <h4 className="text-lg font-bold mb-6 pb-2 border-b-2 border-yellow-300 inline-block">
-              Quick Links
-            </h4>
-            <ul className="space-y-3">
-              {footerLinks.navigation.map((link) => (
-                <li key={link.to}>
-                  <Link
-                    to={link.to}
-                    className={`${linkBaseClasses} flex items-center space-x-2 py-1`}
-                  >
-                    <span className="text-yellow-300 opacity-0 group-hover:opacity-100 transition-all duration-300">▶</span>
-                    <span>{link.label}</span>
-                    <span className={underlineClasses}></span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Support Links */}
-          <div className="lg:col-span-1">
-            <h4 className="text-lg font-bold mb-6 pb-2 border-b-2 border-yellow-300 inline-block">
-              Support
-            </h4>
-            <ul className="space-y-3">
-              {footerLinks.support.map((link) => (
-                <li key={link.to}>
-                  <Link
-                    to={link.to}
-                    className={`${linkBaseClasses} flex items-center space-x-2 py-1`}
-                  >
-                    <span className="text-yellow-300 opacity-0 group-hover:opacity-100 transition-all duration-300">▶</span>
-                    <span>{link.label}</span>
-                    <span className={underlineClasses}></span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Newsletter Section */}
-          <div className="lg:col-span-1">
-            <h4 className="text-lg font-bold mb-6 pb-2 border-b-2 border-yellow-300 inline-block">
-              Stay Updated
-            </h4>
-            <p className="text-white/80 mb-4">
-              Subscribe to our newsletter for the latest books and updates.
-            </p>
-            
-            {isSubscribed ? (
-              <div className="bg-green-500/20 border border-green-400 rounded-lg p-4 text-center animate-pulse">
-                <p className="text-green-300 font-semibold">🎉 Thank you for subscribing!</p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubscribe} className="space-y-3">
-                <div className="relative">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-transparent transition-all duration-300 placeholder-white/60"
-                    required
-                  />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <span className="text-white/60">✉️</span>
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-yellow-400 text-gray-900 font-bold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 hover:bg-yellow-300 active:scale-95 active:bg-yellow-500 shadow-lg hover:shadow-yellow-400/25"
-                >
-                  Subscribe Now
-                </button>
-              </form>
-            )}
+          <div className="flex flex-wrap gap-3">
+            {socials.map((social) => {
+              const label = social[0];
+              const SocialIcon = social[1];
+              return (
+              <a
+                key={label}
+                href="#"
+                aria-label={label}
+                className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-gray-900 ring-1 ring-gray-200 transition hover:bg-orange-50 hover:text-orange-700 hover:ring-orange-200"
+              >
+                <SocialIcon size={20} />
+              </a>
+              );
+            })}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-white/20">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            {/* Copyright */}
-            <div className="text-white/70 text-sm">
-              © {currentYear} Book System. All rights reserved.
-            </div>
+      <section className="bg-orange-600 px-4 py-14 text-white">
+        <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
+          <h2 className="text-3xl font-black">Write your own Somali story</h2>
+          <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-orange-50">
+            Your next chapter could be the one readers remember. Start publishing on Madal today.
+          </p>
+          <Link to="/create" className="mt-6 rounded-lg bg-white px-5 py-3 text-sm font-black text-orange-700 hover:bg-orange-50">
+            Start Writing
+          </Link>
+        </div>
+      </section>
 
-            {/* Additional Links */}
-            <div className="flex flex-wrap justify-center space-x-6 text-sm">
-              <Link
-                to="/sitemap"
-                className="text-white/70 hover:text-yellow-300 transition-colors duration-300"
-              >
-                Sitemap
-              </Link>
-              <Link
-                to="/accessibility"
-                className="text-white/70 hover:text-yellow-300 transition-colors duration-300"
-              >
-                Accessibility
-              </Link>
-              <Link
-                to="/cookies"
-                className="text-white/70 hover:text-yellow-300 transition-colors duration-300"
-              >
-                Cookie Policy
-              </Link>
-            </div>
+      <section className="border-b border-gray-200 bg-gray-50 px-4 py-10">
+        <div className="mx-auto grid max-w-7xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <FooterColumn title="Madal Stories" links={storyLinks} />
+          <FooterColumn title="Genres" links={genreLinks} />
+          <FooterColumn title="For Readers" links={readerLinks} />
+          <FooterColumn title="Community" links={communityLinks} />
+        </div>
+      </section>
 
-            {/* User Status */}
-            <div className="flex items-center space-x-2 text-sm">
-              <div className={`w-2 h-2 rounded-full animate-pulse ${
-                user ? "bg-green-400" : "bg-yellow-400"
-              }`}></div>
-              <span className="text-white/70">
-                {user ? `Welcome, ${user.name || 'User'}!` : "Not logged in"}
-              </span>
-            </div>
+      <section className="px-4 py-10">
+        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+          <div>
+            <Link to="/Home" className="inline-flex items-center gap-3">
+              <img src={madalLogo} alt="Madal" className="h-12 w-12 rounded-lg object-cover" />
+              <span className="text-2xl font-black">Madal</span>
+            </Link>
+            <p className="mt-4 max-w-md text-sm leading-7 text-gray-600">
+              Madal is a home for Somali stories, readers, and writers. Discover chapters, follow authors, and find the story that stays with you.
+            </p>
+          </div>
+
+          <FooterColumn title="Madal" links={[["Home", "/Home"], ["Stories", "/Books"], ["Library", "/library"], ["About", "/About"]]} />
+          <FooterColumn title="Writers" links={[["Create Story", "/create"], ["Dashboard", "/writer-dashboard"], ["My Profile", "/profile"], ["Settings", "/settings"]]} />
+          <FooterColumn title="Support" links={[["Contact", "/Contact"], ["Terms", "/terms"], ["Privacy", "/privacy"], ["Help", "/help"]]} />
+        </div>
+
+        <div className="mx-auto mt-8 flex max-w-7xl flex-col gap-3 border-t border-gray-200 pt-5 text-xs font-semibold text-gray-500 md:flex-row md:items-center md:justify-between">
+          <p>© {currentYear} Madal. All rights reserved.</p>
+          <div className="flex flex-wrap gap-4">
+            <Link to="/terms" className="hover:text-orange-700">Terms</Link>
+            <Link to="/privacy" className="hover:text-orange-700">Privacy Policy</Link>
+            <Link to="/Contact" className="hover:text-orange-700">Contact</Link>
           </div>
         </div>
-      </div>
-
-      {/* Back to Top Button */}
-      <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="fixed bottom-8 right-8 w-12 h-12 bg-yellow-400 text-gray-900 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 hover:bg-yellow-300 active:scale-95 z-40"
-        aria-label="Back to top"
-      >
-        <span className="text-lg font-bold">↑</span>
-      </button>
+      </section>
     </footer>
   );
-};
+}
 
-export default Footer;
+function FooterColumn({ title, links }) {
+  return (
+    <div>
+      <h3 className="text-xs font-black uppercase tracking-wide text-gray-950">{title}</h3>
+      <ul className="mt-4 space-y-3">
+        {links.map(([label, to]) => (
+          <li key={`${title}-${label}`}>
+            <Link to={to} className="text-sm font-semibold text-gray-600 hover:text-orange-700">
+              {label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

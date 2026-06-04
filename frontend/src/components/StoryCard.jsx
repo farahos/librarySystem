@@ -6,7 +6,7 @@ import { authorProfilePath, formatCount, storyAuthor, storyCover, storySummary }
 export default function StoryCard({ story }) {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md">
-      <Link to={`/story/${story.slug}`} className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+      <Link to={`/story/${story.slug}`} className="relative aspect-[2/3] overflow-hidden bg-gray-100">
         <img
           src={storyCover(story)}
           alt={story.title}

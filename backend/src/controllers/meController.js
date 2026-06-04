@@ -18,6 +18,9 @@ async function interactionsWithStories(userId, action) {
       progressPercent: interaction.metadata?.progressPercent || interaction.metadata?.progress || 0,
       chapterId: interaction.metadata?.chapterId,
       chapterNumber: interaction.metadata?.chapterNumber,
+      currentChapterIndex: interaction.metadata?.currentChapterIndex,
+      totalChapters: interaction.metadata?.totalChapters,
+      remainingChapters: interaction.metadata?.remainingChapters,
       lastOpenedAt: interaction.updatedAt,
     }))
     .filter((item) => item.story);
@@ -60,11 +63,29 @@ export async function continueReading(req, res) {
     const items = await interactionsWithStories(req.user._id, "read");
     const withChapters = await Promise.all(
       items.slice(0, 20).map(async (item) => {
-        const chapter = await Chapter.findOne({
-          storyId: item.story._id,
-          chapterNumber: item.chapterNumber || 1,
-        }).select("title chapterNumber readingTime");
-        return { ...item, chapter };
+        const chapters = await Chapter.find({ storyId: item.story._id, status: "published" })
+          .select("title chapterNumber readingTime")
+          .sort({ chapterNumber: 1 })
+          .lean();
+        const chapterNumber = item.chapterNumber || 1;
+        const chapter = chapters.find((entry) => Number(entry.chapterNumber) === Number(chapterNumber)) || chapters[0] || null;
+        const currentChapterIndex = chapter ? chapters.findIndex((entry) => entry._id.toString() === chapter._id.toString()) + 1 : 0;
+        const totalChapters = chapters.length;
+        const remainingChapters = Math.max(totalChapters - currentChapterIndex, 0);
+        const progressPercent = totalChapters > 0 && currentChapterIndex > 0
+          ? Math.round((currentChapterIndex / totalChapters) * 100)
+          : item.progressPercent;
+
+        return {
+          ...item,
+          chapter,
+          chapterNumber: chapter?.chapterNumber || chapterNumber,
+          currentChapterIndex,
+          totalChapters,
+          remainingChapters,
+          progress: progressPercent,
+          progressPercent,
+        };
       })
     );
     res.json({ items: withChapters });

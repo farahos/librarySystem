@@ -127,8 +127,8 @@ const Post = () => {
             </label>
           </div>
           {form.coverUrl && (
-            <div className="overflow-hidden rounded-lg border border-gray-200">
-              <img src={form.coverUrl} alt="Cover preview" className="h-64 w-full object-cover" />
+            <div className="mx-auto w-full max-w-xs overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+              <img src={form.coverUrl} alt="Cover preview" className="aspect-[2/3] w-full object-cover" />
             </div>
           )}
           <label className="block text-sm font-bold text-gray-700">

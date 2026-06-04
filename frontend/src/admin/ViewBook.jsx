@@ -36,7 +36,7 @@ const ViewBook = () => {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {stories.map((story) => (
             <article key={story._id} className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-              <img src={storyCover(story)} alt={story.title} className="h-56 w-full object-cover" />
+              <img src={storyCover(story)} alt={story.title} className="aspect-[2/3] w-full object-cover" />
               <div className="p-4">
                 <h3 className="text-xl font-black text-gray-950">{story.title}</h3>
                 <p className="mt-1 text-sm font-semibold text-gray-500">{storyAuthor(story)}</p>

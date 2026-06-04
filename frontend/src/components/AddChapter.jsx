@@ -7,7 +7,6 @@ const initialForm = {
   title: "",
   chapterNumber: 1,
   content: "",
-  audioUrl: "",
   status: "published",
 };
 
@@ -16,7 +15,6 @@ const AddChapter = () => {
   const navigate = useNavigate();
   const [story, setStory] = useState(null);
   const [form, setForm] = useState(initialForm);
-  const [audioFile, setAudioFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingPage, setLoadingPage] = useState(true);
 
@@ -34,7 +32,7 @@ const AddChapter = () => {
         setStory(storyResponse.data.story);
         setForm((current) => ({
           ...current,
-          title: `Chapter ${nextNumber}`,
+          title: "",
           chapterNumber: nextNumber,
         }));
       })
@@ -45,27 +43,15 @@ const AddChapter = () => {
       .finally(() => setLoadingPage(false));
   }, [storyId, navigate]);
 
-  const uploadAudio = async () => {
-    if (!audioFile) return form.audioUrl;
-    const formData = new FormData();
-    formData.append("file", audioFile);
-    const { data } = await apiClient.post("/uploads/audio", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return data.secureUrl;
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
     try {
-      const uploadedAudioUrl = await uploadAudio();
       await apiClient.post(`/stories/${storyId}/chapters`, {
         title: form.title,
         chapterNumber: Number(form.chapterNumber),
         content: form.content,
         status: form.status,
-        audio: uploadedAudioUrl ? { source: "upload", url: uploadedAudioUrl } : { source: "none" },
       });
 
       toast.success(form.status === "draft" ? "Chapter saved as draft" : "Chapter published");
@@ -113,20 +99,6 @@ const AddChapter = () => {
             required
           />
         </label>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <Input label="Audio URL optional" value={form.audioUrl} onChange={(value) => update("audioUrl", value)} />
-          <label className="block text-sm font-bold text-gray-700">
-            Audio file optional
-            <input
-              type="file"
-              accept="audio/mp3,audio/mpeg,audio/wav,audio/m4a,audio/mp4"
-              onChange={(event) => setAudioFile(event.target.files?.[0] || null)}
-              className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-3 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-orange-600 file:px-3 file:py-2 file:font-bold file:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-            />
-            {audioFile && <span className="mt-2 block truncate text-xs font-semibold text-gray-500">{audioFile.name}</span>}
-          </label>
-        </div>
 
         <div className="flex flex-wrap gap-3">
           <button disabled={loading} className="rounded-lg bg-orange-600 px-5 py-3 font-black text-white hover:bg-orange-700 disabled:bg-orange-300">

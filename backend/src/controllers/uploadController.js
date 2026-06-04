@@ -16,7 +16,7 @@ export async function uploadImage(req, res) {
     const result = await uploadBuffer(req.file, {
       folder: "madal/covers",
       resource_type: "image",
-      transformation: [{ width: 1200, height: 1600, crop: "limit" }],
+      transformation: [{ width: 900, height: 1350, crop: "fill", gravity: "auto", quality: "auto", fetch_format: "auto" }],
     });
 
     res.status(201).json({
