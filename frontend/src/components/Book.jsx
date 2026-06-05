@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, ChevronLeft, ChevronRight, Eye, Heart, PenLine } from "lucide-react";
-import { apiClient, authorProfilePath, formatCount, storyAuthor, storyCover, storySummary } from "../lib/apiClient";
+import { BookOpen, ChevronLeft, ChevronRight, Library, PenLine, Users } from "lucide-react";
+import { apiClient, authorProfilePath, formatCount, storyAuthor, storyCover } from "../lib/apiClient";
 
 const genres = [
   ["romance", "Romance", "Love, family, and longing"],
@@ -32,7 +32,6 @@ const authorName = (author, fallbackStory) =>
 const Book = () => {
   const [feed, setFeed] = useState(null);
   const [recentlyUpdated, setRecentlyUpdated] = useState([]);
-  const [featuredDetail, setFeaturedDetail] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -65,7 +64,6 @@ const Book = () => {
     [feed, recentlyUpdated]
   );
 
-  const featuredStory = storyPool[0];
   const trendingStories = feed?.trending || [];
 
   const risingAuthors = useMemo(() => {
@@ -88,32 +86,20 @@ const Book = () => {
     return [...authorMap.values()].sort((a, b) => b.reads - a.reads).slice(0, 6);
   }, [storyPool]);
 
-  useEffect(() => {
-    if (!featuredStory?.slug) {
-      setFeaturedDetail(null);
-      return;
-    }
-
-    apiClient
-      .get(`/stories/${featuredStory.slug}`)
-      .then(({ data }) => setFeaturedDetail(data))
-      .catch(() => setFeaturedDetail(null));
-  }, [featuredStory?.slug]);
-
   if (loading) {
-    return <main className="min-h-screen bg-gray-50 p-8 text-gray-500">Loading Madal...</main>;
+    return <main className="min-h-screen bg-[#121212] p-8 text-white/70">Loading Madal...</main>;
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-gray-50">
+    <main className="min-h-screen overflow-x-hidden bg-[#121212] text-white">
       <Hero stories={storyPool.slice(0, 5)} />
 
-      <div className="mx-auto max-w-7xl space-y-14 px-4 py-12">
-        {featuredStory && <FeaturedStory story={featuredStory} detail={featuredDetail} />}
-        <StoryRail title="Trending Stories" kicker="Readers are opening these now" stories={trendingStories.slice(0, 4)} />
-        <StoryRail title="Recently Updated" kicker="Fresh chapters and new movement" stories={recentlyUpdated.slice(0, 4)} />
+      <div className="space-y-14 px-4 py-12 md:px-8 md:py-16 lg:px-10">
+        <StoryRail title="Trending Stories" kicker="Readers are opening these now" stories={trendingStories.slice(0, 6)} />
+        <StoryRail title="Recently Updated" kicker="Fresh chapters and new movement" stories={recentlyUpdated.slice(0, 6)} />
         {risingAuthors.length > 0 && <RisingAuthors authors={risingAuthors} />}
-        <BecomeWriter />
+        <ReadWriteGrow />
+        <CommunitySection />
       </div>
     </main>
   );
@@ -123,25 +109,33 @@ function Hero({ stories }) {
   const lead = stories[0];
 
   return (
-    <section className="relative overflow-hidden bg-orange-50">
-      <div className="absolute inset-x-0 top-0 h-40 bg-white/70" />
-      <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-9 px-4 py-10 sm:py-14 lg:grid lg:min-h-[650px] lg:grid-cols-[0.92fr_1.08fr] lg:py-20">
-        <div className="w-full min-w-0 text-center text-gray-950 lg:text-left">
-          <h1 className="mx-auto max-w-3xl text-4xl font-black leading-tight sm:text-5xl md:text-6xl lg:mx-0">
+    <section className="relative overflow-hidden bg-[#121212]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_18%,rgba(255,122,0,0.24),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.06),transparent_44%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#121212] to-transparent" />
+      <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-10 px-4 py-12 text-center sm:py-16 lg:min-h-[720px] lg:py-20">
+        <div className="w-full min-w-0">
+          <p className="mx-auto w-fit rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#FF7A00]">
+            The home of Somali storytelling
+          </p>
+          <h1 className="mx-auto mt-5 max-w-5xl text-5xl font-black leading-[0.95] text-white sm:text-6xl md:text-7xl">
             Where Somali Stories Come Alive
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-gray-700 sm:text-lg sm:leading-8 lg:mx-0">
-            Discover original fiction, poetry, history, mystery, and serialized stories written by a new generation of Somali creators.
+          <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-white/[0.72] sm:text-lg sm:leading-8">
+            Read and publish stories shaped by Somali voices. Madal brings chapters, writers, and reader communities into one cinematic home.
           </p>
-          <div className="mt-7">
-            <p className="text-sm font-bold text-gray-500">Explore stories in your favorite genre:</p>
-            <div className="madal-scrollbar-hide mx-auto mt-3 max-w-full overflow-x-auto lg:mx-0 lg:overflow-visible">
-              <div className="flex w-max max-w-none flex-nowrap gap-2 lg:w-auto lg:max-w-3xl lg:flex-wrap lg:justify-start">
-                {genres.map(([value, label]) => (
+          <div className="mt-8">
+            <p className="text-sm font-bold text-white/[0.58]">Explore stories in your favorite genre:</p>
+            <div className="madal-scrollbar-hide mx-auto mt-3 max-w-full overflow-x-auto lg:overflow-visible">
+              <div className="mx-auto flex w-max max-w-none flex-nowrap gap-2 lg:w-auto lg:max-w-4xl lg:flex-wrap lg:justify-center">
+                {genres.slice(0, 8).map(([value, label], index) => (
                   <Link
                     key={value}
                     to={`/Books?category=${value}`}
-                    className="rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-black text-orange-700 shadow-sm transition hover:border-orange-400 hover:bg-orange-100"
+                    className={`rounded-full border px-4 py-2 text-sm font-black transition ${
+                      index === 0
+                        ? "border-[#FF7A00] bg-[#FF7A00] text-white"
+                        : "border-white/[0.18] bg-white text-[#121212] hover:border-[#FF7A00] hover:text-[#FF7A00]"
+                    }`}
                   >
                     {label}
                   </Link>
@@ -149,91 +143,35 @@ function Hero({ stories }) {
               </div>
             </div>
           </div>
-          <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
-            <Link to="/Books" className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-5 py-3 font-black text-white hover:bg-orange-700">
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link to="/Books" className="inline-flex items-center gap-2 rounded-lg bg-[#FF7A00] px-5 py-3 font-black text-white shadow-[0_18px_36px_rgba(255,122,0,0.28)] transition hover:bg-[#e66f00]">
               <BookOpen size={18} />
               Explore Stories
             </Link>
-            <Link to={lead ? `/story/${lead.slug}` : "/Books"} className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 font-black text-gray-950 hover:bg-orange-50">
+            <Link to={lead ? `/story/${lead.slug}` : "/Books"} className="inline-flex items-center gap-2 rounded-lg border border-white/[0.18] bg-white/[0.08] px-5 py-3 font-black text-white transition hover:bg-white/[0.14]">
               Start Reading
             </Link>
           </div>
         </div>
 
-        <div className="mx-auto grid w-full max-w-sm grid-cols-3 items-end gap-3 md:max-w-none md:gap-4">
+        <div className="relative mx-auto grid w-full max-w-sm grid-cols-3 items-end gap-3 md:max-w-5xl md:grid-cols-5 md:gap-4">
+          <div className="absolute -inset-6 rounded-[32px] bg-[#FF7A00]/10 blur-3xl" />
           {stories.slice(0, 5).map((story, index) => (
             <Link
               key={story._id}
               to={`/story/${story.slug}`}
-              className={`group overflow-hidden rounded-lg bg-white shadow-xl ring-1 ring-gray-200 ${
+              className={`group relative overflow-hidden rounded-lg bg-white shadow-2xl ring-1 ring-white/[0.12] ${
                 index > 2 ? "hidden sm:block" : ""
               } ${
-                index === 1 || index === 3 ? "sm:-translate-y-8" : ""
-              } ${index === 2 ? "sm:translate-y-8" : ""}`}
+                index === 1 || index === 3 ? "sm:-translate-y-6" : ""
+              } ${index === 2 ? "sm:translate-y-6" : ""}`}
             >
               <img src={storyCover(story)} alt={story.title} className="aspect-[2/3] w-full object-cover transition duration-300 group-hover:scale-105" />
+              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 text-xs font-black text-white opacity-0 transition group-hover:opacity-100">
+                {story.title}
+              </span>
             </Link>
           ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FeaturedStory({ story, detail }) {
-  const chapters = (detail?.chapters || []).slice(0, 3);
-
-  return (
-    <section className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
-      <div className="grid gap-0 lg:grid-cols-[0.82fr_1.18fr]">
-        <Link to={`/story/${story.slug}`} className="relative block min-h-[420px] bg-gray-950">
-          <img src={storyCover(story)} alt={story.title} className="absolute inset-0 h-full w-full object-cover opacity-70" />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <p className="text-sm font-black uppercase tracking-wide text-orange-200">Featured Story</p>
-            <h2 className="mt-2 text-4xl font-black leading-tight">{story.title}</h2>
-            <p className="mt-2 font-semibold text-gray-200">{storyAuthor(story)}</p>
-          </div>
-        </Link>
-
-        <div className="p-6 md:p-8">
-          <p className="text-sm font-black uppercase tracking-wide text-orange-600">Start here</p>
-          <h3 className="mt-2 text-3xl font-black text-gray-950">{story.title}</h3>
-          <p className="mt-4 text-base leading-8 text-gray-600">{storySummary(story)}</p>
-
-          <div className="mt-5 flex flex-wrap gap-4 text-sm font-bold text-gray-500">
-            <span className="inline-flex items-center gap-1">
-              <Eye size={16} />
-              {formatCount(story.metrics?.views || 0)} views
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <BookOpen size={16} />
-              {formatCount(story.metrics?.reads || 0)} reads
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Heart size={16} />
-              {formatCount(story.metrics?.likes || 0)} likes
-            </span>
-          </div>
-
-          <div className="mt-6 space-y-3">
-            <p className="font-black text-gray-950">Chapter previews</p>
-            {chapters.length > 0 ? (
-              chapters.map((chapter) => (
-                <Link key={chapter._id} to={`/read/${story._id}/${chapter.chapterNumber}`} className="block rounded-lg bg-gray-50 p-4 hover:bg-orange-50">
-                  <p className="text-sm font-black text-orange-700">Chapter {chapter.chapterNumber}</p>
-                  <h4 className="mt-1 font-black text-gray-950">{chapter.title}</h4>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-600">{chapter.content}</p>
-                </Link>
-              ))
-            ) : (
-              <p className="rounded-lg bg-gray-50 p-4 text-sm font-semibold text-gray-500">Open the story to begin reading.</p>
-            )}
-          </div>
-
-          <Link to={`/story/${story.slug}`} className="mt-6 inline-flex rounded-lg bg-orange-600 px-5 py-3 font-black text-white hover:bg-orange-700">
-            Read Featured Story
-          </Link>
         </div>
       </div>
     </section>
@@ -254,17 +192,17 @@ function StoryRail({ title, kicker, stories }) {
   };
 
   return (
-    <section className="overflow-hidden">
+    <section className="overflow-hidden rounded-lg border border-white/10 bg-[#181818] p-4 md:p-6">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-bold uppercase tracking-wide text-orange-600">{kicker}</p>
-          <h2 className="text-2xl font-black text-gray-950">{title}</h2>
+          <p className="text-sm font-bold uppercase tracking-wide text-[#FF7A00]">{kicker}</p>
+          <h2 className="text-2xl font-black text-white md:text-3xl">{title}</h2>
         </div>
         <div className="flex shrink-0 items-center gap-2 pt-8">
           <button
             type="button"
             onClick={() => scrollRail(-1)}
-            className="hidden h-9 w-9 items-center justify-center rounded-full bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:bg-orange-50 hover:text-orange-700 sm:flex"
+            className="hidden h-9 w-9 items-center justify-center rounded-full bg-white/8 text-white ring-1 ring-white/10 hover:text-[#FF7A00] sm:flex"
             aria-label={`Scroll ${title} left`}
           >
             <ChevronLeft size={18} />
@@ -272,17 +210,17 @@ function StoryRail({ title, kicker, stories }) {
           <button
             type="button"
             onClick={() => scrollRail(1)}
-            className="hidden h-9 w-9 items-center justify-center rounded-full bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:bg-orange-50 hover:text-orange-700 sm:flex"
+            className="hidden h-9 w-9 items-center justify-center rounded-full bg-white/8 text-white ring-1 ring-white/10 hover:text-[#FF7A00] sm:flex"
             aria-label={`Scroll ${title} right`}
           >
             <ChevronRight size={18} />
           </button>
-          <Link to="/Books" className="text-right text-sm font-bold text-orange-700">View All</Link>
+          <Link to="/Books" className="text-right text-sm font-bold text-[#FF7A00]">View All</Link>
         </div>
       </div>
       <div
         ref={railRef}
-        className="madal-scrollbar-hide -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-3 scroll-smooth sm:gap-4 lg:gap-5"
+        className="madal-scrollbar-hide flex snap-x gap-3 overflow-x-auto pb-3 scroll-smooth sm:gap-4 lg:gap-5"
       >
         {stories.map((story) => (
           <HomeStoryCard key={story._id} story={story} />
@@ -294,17 +232,17 @@ function StoryRail({ title, kicker, stories }) {
 
 function HomeStoryCard({ story }) {
   return (
-    <article className="group w-[31%] min-w-[31%] snap-start sm:w-40 sm:min-w-40 lg:w-52 lg:min-w-52">
-      <Link to={`/story/${story.slug}`} className="block overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200 transition hover:-translate-y-0.5 hover:ring-orange-200">
+    <article className="group w-36 min-w-36 snap-start sm:w-44 sm:min-w-44 lg:w-56 lg:min-w-56">
+      <Link to={`/story/${story.slug}`} className="block overflow-hidden rounded-lg bg-[#0f0f0f] ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:ring-[#FF7A00]/50">
         <img src={storyCover(story)} alt={story.title} className="aspect-[2/3] w-full object-cover transition duration-300 group-hover:scale-105" />
       </Link>
-      <Link to={`/story/${story.slug}`} className="mt-2 line-clamp-2 block text-sm font-black leading-5 text-gray-950 hover:text-orange-700 sm:text-base">
+      <Link to={`/story/${story.slug}`} className="mt-3 line-clamp-2 block text-sm font-black leading-5 text-white hover:text-[#FF7A00] sm:text-base">
         {story.title}
       </Link>
-      <Link to={authorProfilePath(story)} className="mt-1 line-clamp-1 block text-xs font-semibold text-gray-500 hover:text-orange-700 sm:text-sm">
+      <Link to={authorProfilePath(story)} className="mt-1 line-clamp-1 block text-xs font-semibold text-white/55 hover:text-[#FF7A00] sm:text-sm">
         by {storyAuthor(story)}
       </Link>
-      <p className="mt-2 w-fit rounded-md border border-gray-200 bg-white px-2 py-1 text-[10px] font-black capitalize text-gray-600 sm:text-xs">
+      <p className="mt-2 w-fit rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black capitalize text-white/62 sm:text-xs">
         {story.category || "drama"}
       </p>
     </article>
@@ -313,15 +251,15 @@ function HomeStoryCard({ story }) {
 
 function RisingAuthors({ authors }) {
   return (
-    <section>
+    <section className="rounded-lg border border-white/10 bg-[#181818] p-4 md:p-6">
       <div className="mb-5">
-        <p className="text-sm font-bold uppercase tracking-wide text-orange-600">Voices gaining readers</p>
-        <h2 className="text-2xl font-black text-gray-950">Rising Authors</h2>
+        <p className="text-sm font-bold uppercase tracking-wide text-[#FF7A00]">Voices gaining readers</p>
+        <h2 className="text-2xl font-black text-white md:text-3xl">Featured Writers</h2>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {authors.map(({ author, reads, stories, latestStory }) => (
-          <Link key={author?._id || author?.username || latestStory?._id} to={authorProfilePath(author || latestStory)} className="flex items-center gap-4 rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200 hover:ring-orange-200">
-            <span className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+          <Link key={author?._id || author?.username || latestStory?._id} to={authorProfilePath(author || latestStory)} className="flex items-center gap-4 rounded-lg bg-white/[0.05] p-4 ring-1 ring-white/10 hover:ring-[#FF7A00]/50">
+            <span className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-white/10">
               {author?.avatarUrl ? (
                 <img src={author.avatarUrl} alt={authorName(author, latestStory)} className="h-full w-full object-cover" />
               ) : (
@@ -329,9 +267,9 @@ function RisingAuthors({ authors }) {
               )}
             </span>
             <span className="min-w-0">
-              <span className="block truncate font-black text-gray-950">{authorName(author, latestStory)}</span>
-              <span className="mt-1 block truncate text-sm font-semibold text-gray-500">{stories} stories - {formatCount(reads)} reads</span>
-              {latestStory && <span className="mt-2 block truncate text-sm font-bold text-orange-700">{latestStory.title}</span>}
+              <span className="block truncate font-black text-white">{authorName(author, latestStory)}</span>
+              <span className="mt-1 block truncate text-sm font-semibold text-white/55">{stories} stories - {formatCount(reads)} reads</span>
+              {latestStory && <span className="mt-2 block truncate text-sm font-bold text-[#FF7A00]">{latestStory.title}</span>}
             </span>
           </Link>
         ))}
@@ -340,21 +278,66 @@ function RisingAuthors({ authors }) {
   );
 }
 
-function BecomeWriter() {
+function ReadWriteGrow() {
+  const pillars = [
+    ["Read", BookOpen, "Discover serialized fiction, poetry, history, mystery, and chapters from Somali creators."],
+    ["Write", PenLine, "Publish chapters, build a profile, and grow a readership around your work."],
+    ["Grow", Library, "Build a library of chapters, follow writers, and return to stories you love."],
+  ];
+
   return (
-    <section className="overflow-hidden rounded-lg border border-orange-100 bg-white p-6 text-gray-950 shadow-sm md:p-8">
-      <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+    <section className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.04] p-6 md:p-8">
+      <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
         <div>
-          <p className="text-sm font-black uppercase tracking-wide text-orange-600">Become a writer</p>
-          <h2 className="mt-2 text-3xl font-black">Your story could be the next one readers open.</h2>
-          <p className="mt-3 max-w-2xl leading-7 text-gray-600">
-            Publish chapters, build a readership, and give Somali stories another place to live.
+          <p className="text-sm font-black uppercase tracking-[0.18em] text-[#FF7A00]">Read. Write. Grow.</p>
+          <h2 className="mt-3 text-3xl font-black leading-tight text-white md:text-5xl">One platform for the full story journey.</h2>
+          <p className="mt-4 max-w-xl leading-7 text-white/[0.64]">
+            Madal is built for how stories move now: from a writer's first chapter, to a reader's library, to a community that keeps returning.
           </p>
         </div>
-        <Link to="/create" className="inline-flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-5 py-3 font-black text-white hover:bg-orange-700">
-          <PenLine size={18} />
-          Start Writing
-        </Link>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {pillars.map(([title, Icon, copy]) => (
+            <article key={title} className="rounded-lg border border-white/10 bg-[#181818] p-5">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#FF7A00] text-white">
+                {React.createElement(Icon, { size: 20 })}
+              </span>
+              <h3 className="mt-5 text-xl font-black text-white">{title}</h3>
+              <p className="mt-3 text-sm leading-6 text-white/60">{copy}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CommunitySection() {
+  return (
+    <section className="grid gap-6 overflow-hidden rounded-lg border border-white/10 bg-[#181818] p-6 md:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <div>
+        <p className="text-sm font-black uppercase tracking-[0.18em] text-[#FF7A00]">Community</p>
+        <h2 className="mt-3 text-3xl font-black leading-tight text-white md:text-5xl">Stories matter more when readers gather around them.</h2>
+        <p className="mt-4 max-w-2xl leading-7 text-white/[0.64]">
+          Follow writers, return to chapters, discover rising voices, and help build a premium home for Somali storytelling.
+        </p>
+        <div className="mt-7 flex flex-wrap gap-3">
+          <Link to="/Register" className="inline-flex items-center gap-2 rounded-lg bg-[#FF7A00] px-5 py-3 font-black text-white hover:bg-[#e66f00]">
+            <Users size={18} />
+            Join Madal
+          </Link>
+          <Link to="/create" className="inline-flex items-center gap-2 rounded-lg border border-white/[0.14] px-5 py-3 font-black text-white hover:bg-white/[0.08]">
+            <PenLine size={18} />
+            Start Writing
+          </Link>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {["Readers", "Writers", "Chapters", "Library"].map((item, index) => (
+          <div key={item} className={`rounded-lg border border-white/10 bg-white/[0.04] p-5 ${index === 1 ? "mt-8" : ""} ${index === 2 ? "-mt-4" : ""}`}>
+            <p className="text-3xl font-black text-white">{item}</p>
+            <p className="mt-2 text-sm font-semibold text-white/[0.54]">Part of the Madal ecosystem</p>
+          </div>
+        ))}
       </div>
     </section>
   );

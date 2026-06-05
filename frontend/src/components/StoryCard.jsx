@@ -1,5 +1,5 @@
 import React from "react";
-import { BadgeCheck, BookOpen, Eye, Headphones, Heart } from "lucide-react";
+import { BadgeCheck, BookOpen, Eye, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { authorProfilePath, formatCount, storyAuthor, storyCover, storySummary } from "../lib/apiClient";
 
@@ -17,11 +17,6 @@ export default function StoryCard({ story }) {
             <span className="inline-flex items-center gap-1 rounded-full bg-orange-600 px-2 py-1 text-xs font-bold text-white">
               <BadgeCheck size={12} />
               Original
-            </span>
-          )}
-          {story.audio?.url && (
-            <span className="rounded-full bg-black/70 p-1.5 text-white">
-              <Headphones size={14} />
             </span>
           )}
         </div>

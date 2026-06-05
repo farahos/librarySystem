@@ -85,20 +85,20 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-orange-100 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        <Link to="/Home" className="flex items-center gap-2 text-2xl font-black text-gray-950">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#121212]/95 text-white backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+        <Link to="/Home" className="flex items-center gap-3 text-2xl font-black text-white">
           <img src={madalLogo} alt="Madal" className="h-11 w-11 rounded-lg object-cover shadow-sm" />
           Madal
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-2 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
               className={`rounded-lg px-3 py-2 text-sm font-bold transition ${
-                location.pathname === link.to ? "bg-orange-50 text-orange-700" : "text-gray-700 hover:bg-gray-50 hover:text-orange-700"
+                location.pathname === link.to ? "bg-white/10 text-[#FF7A00]" : "text-white/70 hover:bg-white/[0.08] hover:text-white"
               }`}
             >
               {link.label}
@@ -107,13 +107,16 @@ const Header = () => {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <Link to="/Books" className="rounded-lg p-2 text-white/75 hover:bg-white/[0.08] hover:text-white" aria-label="Search stories">
+            <Search size={19} />
+          </Link>
           {user ? (
             <>
               <div ref={bellRef} className="relative">
-                <button onClick={openNotifications} className="relative rounded-lg p-2 text-gray-700 hover:bg-gray-50" title="Notifications">
+                <button onClick={openNotifications} className="relative rounded-lg p-2 text-white/75 hover:bg-white/[0.08] hover:text-white" title="Notifications">
                   <Bell size={19} />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 rounded-full bg-orange-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                    <span className="absolute -right-1 -top-1 rounded-full bg-[#FF7A00] px-1.5 py-0.5 text-[10px] font-black text-white">
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
@@ -125,14 +128,14 @@ const Header = () => {
                     </div>
                     <div className="max-h-96 overflow-y-auto">
                       {notifications.slice(0, 6).map((notification) => (
-                        <Link key={notification._id} to={notificationLink(notification)} className="block border-b border-gray-100 px-4 py-3 hover:bg-orange-50">
+                        <Link key={notification._id} to={notificationLink(notification)} className="block border-b border-gray-100 px-4 py-3 hover:bg-[#FF7A00]/10">
                           <p className="text-sm font-bold text-gray-900">{notificationText(notification)}</p>
                           <p className="mt-1 text-xs font-semibold text-gray-500">{new Date(notification.createdAt).toLocaleString()}</p>
                         </Link>
                       ))}
                       {notifications.length === 0 && <p className="px-4 py-6 text-sm text-gray-500">No notifications yet.</p>}
                     </div>
-                    <Link to="/notifications" className="block bg-gray-50 px-4 py-3 text-center text-sm font-black text-orange-700 hover:bg-orange-50">
+                    <Link to="/notifications" className="block bg-gray-50 px-4 py-3 text-center text-sm font-black text-[#FF7A00] hover:bg-[#FF7A00]/10">
                       View All Notifications
                     </Link>
                   </div>
@@ -140,10 +143,10 @@ const Header = () => {
               </div>
 
               <div ref={menuRef} className="relative">
-                <button onClick={() => setUserMenuOpen((value) => !value)} className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-50">
+                <button onClick={() => setUserMenuOpen((value) => !value)} className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-white/[0.08]">
                   <Avatar profile={user} />
-                  <span className="text-sm font-semibold text-gray-600">{user.username}</span>
-                  <ChevronDown size={16} className="text-gray-500" />
+                  <span className="text-sm font-semibold text-white/[0.72]">{user.username}</span>
+                  <ChevronDown size={16} className="text-white/[0.55]" />
                 </button>
                 {userMenuOpen && (
                   <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
@@ -161,10 +164,10 @@ const Header = () => {
             </>
           ) : (
             <>
-              <Link to="/login" className="rounded-lg px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">
+              <Link to="/login" className="rounded-lg px-3 py-2 text-sm font-bold text-white/[0.72] hover:bg-white/[0.08] hover:text-white">
                 Login
               </Link>
-              <Link to="/Register" className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-3 py-2 text-sm font-bold text-white hover:bg-orange-700">
+              <Link to="/Register" className="inline-flex items-center gap-2 rounded-lg bg-[#FF7A00] px-3 py-2 text-sm font-bold text-white hover:bg-[#e66f00]">
                 <UserPlus size={16} />
                 Join
               </Link>
@@ -173,48 +176,48 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
-          <Link to="/Books" className="rounded-lg p-2 text-gray-950 hover:bg-orange-50" aria-label="Search stories">
+          <Link to="/Books" className="rounded-lg p-2 text-white/[0.85] hover:bg-white/[0.08]" aria-label="Search stories">
             <Search size={22} />
           </Link>
           {!user && (
-            <Link to="/login" className="px-2 py-2 text-sm font-black uppercase text-gray-950">
+            <Link to="/login" className="px-2 py-2 text-sm font-black uppercase text-white">
               Sign in
             </Link>
           )}
           {user && (
-            <Link to="/notifications" className="relative rounded-lg p-2 text-gray-950 hover:bg-orange-50" aria-label="Notifications">
+            <Link to="/notifications" className="relative rounded-lg p-2 text-white/[0.85] hover:bg-white/[0.08]" aria-label="Notifications">
               <Bell size={21} />
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 rounded-full bg-orange-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                <span className="absolute -right-1 -top-1 rounded-full bg-[#FF7A00] px-1.5 py-0.5 text-[10px] font-black text-white">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
             </Link>
           )}
-          <button className="rounded-lg p-2 text-gray-950" onClick={() => setOpen((value) => !value)} aria-label="Open menu">
+          <button className="rounded-lg p-2 text-white" onClick={() => setOpen((value) => !value)} aria-label="Open menu">
             {open ? <X /> : <Menu />}
           </button>
         </div>
       </div>
 
       {open && (
-        <div className="border-t border-orange-100 px-4 py-3 md:hidden">
+        <div className="border-t border-white/10 px-4 py-3 md:hidden">
           <nav className="flex flex-col gap-2">
             {navLinks.map((link) => (
-              <Link key={link.to} to={link.to} className="rounded-lg px-3 py-2 font-bold text-gray-700">
+              <Link key={link.to} to={link.to} className="rounded-lg px-3 py-2 font-bold text-white/75">
                 {link.label}
               </Link>
             ))}
             {user ? (
               <>
-                <Link to="/profile" className="rounded-lg px-3 py-2 font-bold text-gray-700">My Profile</Link>
-                <Link to="/notifications" className="rounded-lg px-3 py-2 font-bold text-gray-700">Notifications</Link>
-                <Link to="/writer-dashboard" className="rounded-lg px-3 py-2 font-bold text-gray-700">Writer Dashboard</Link>
-                <Link to="/settings" className="rounded-lg px-3 py-2 font-bold text-gray-700">Settings</Link>
-                <button onClick={handleLogout} className="rounded-lg bg-gray-900 px-3 py-2 font-bold text-white">Logout</button>
+                <Link to="/profile" className="rounded-lg px-3 py-2 font-bold text-white/75">My Profile</Link>
+                <Link to="/notifications" className="rounded-lg px-3 py-2 font-bold text-white/75">Notifications</Link>
+                <Link to="/writer-dashboard" className="rounded-lg px-3 py-2 font-bold text-white/75">Writer Dashboard</Link>
+                <Link to="/settings" className="rounded-lg px-3 py-2 font-bold text-white/75">Settings</Link>
+                <button onClick={handleLogout} className="rounded-lg bg-white px-3 py-2 font-bold text-[#121212]">Logout</button>
               </>
             ) : (
-              <Link to="/Register" className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-3 py-2 font-bold text-white">
+              <Link to="/Register" className="inline-flex items-center gap-2 rounded-lg bg-[#FF7A00] px-3 py-2 font-bold text-white">
                 <PenLine size={16} />
                 Start writing
               </Link>
@@ -229,7 +232,7 @@ const Header = () => {
 function MenuLink({ to, icon, label }) {
   const MenuIcon = icon;
   return (
-    <Link to={to} className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-orange-50 hover:text-orange-700">
+    <Link to={to} className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-[#FF7A00]/10 hover:text-[#FF7A00]">
       <MenuIcon size={17} />
       {label}
     </Link>

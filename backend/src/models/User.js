@@ -25,13 +25,13 @@ const UserSchema = new Schema(
     coverUrl: { type: String },
     roles: {
       type: [String],
-      enum: ["reader", "writer", "verified_writer", "admin"],
-      default: ["reader"],
+      enum: ["user", "verified_author", "moderator", "admin", "owner"],
+      default: ["user"],
     },
     verification: {
       status: {
         type: String,
-        enum: ["none", "pending", "verified", "rejected"],
+        enum: ["none", "pending", "approved", "rejected"],
         default: "none",
       },
       verifiedAt: { type: Date },
@@ -59,8 +59,24 @@ const UserSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["active", "suspended", "banned"],
+      enum: ["active", "warned", "suspended", "banned"],
       default: "active",
+    },
+    discipline: {
+      warnings: [
+        {
+          reason: String,
+          moderatorId: { type: Schema.Types.ObjectId, ref: "User" },
+          createdAt: { type: Date, default: Date.now },
+        },
+      ],
+      suspension: {
+        reason: String,
+        moderatedBy: { type: Schema.Types.ObjectId, ref: "User" },
+        startDate: Date,
+        endDate: Date,
+        permanent: { type: Boolean, default: false },
+      },
     },
     emailVerified: { type: Boolean, default: false },
     lastLoginAt: { type: Date },

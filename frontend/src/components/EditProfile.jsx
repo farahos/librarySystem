@@ -61,7 +61,7 @@ const EditProfile = () => {
       const nextUser = data.user;
       localStorage.setItem("user", JSON.stringify(nextUser));
       localStorage.setItem("userId", nextUser.id || nextUser._id || "");
-      localStorage.setItem("userRole", nextUser.role || (nextUser.roles?.includes("writer") ? "writer" : "reader"));
+      localStorage.setItem("userRole", nextUser.role || "user");
       setUser(nextUser);
       login({ user: nextUser, token: localStorage.getItem("token") }, 7 * 24 * 60 * 60);
       toast.success("Profile updated");

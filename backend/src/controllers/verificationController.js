@@ -43,11 +43,12 @@ export async function review(req, res) {
     const verified = req.body.status === "approved";
     const userUpdate = {
       verification: {
-        status: verified ? "verified" : "rejected",
+        status: verified ? "approved" : "rejected",
         verifiedAt: verified ? new Date() : undefined,
       },
     };
-    if (verified) userUpdate.$addToSet = { roles: "verified_writer" };
+    if (verified) userUpdate.$addToSet = { roles: "verified_author" };
+    if (!verified) userUpdate.$pull = { roles: "verified_author" };
     await User.findByIdAndUpdate(request.userId, userUpdate);
 
     await Notification.create({

@@ -35,8 +35,8 @@ const faqs = [
     answer: "Yes. Create an account as a writer, open Write, and publish your story with a first chapter.",
   },
   {
-    question: "Does Madal support audio chapters?",
-    answer: "Yes. The platform already supports audio URLs per chapter, with file upload planned for production.",
+    question: "Can I organize stories into reading lists?",
+    answer: "Yes. Readers can save stories into lists and return to them from the library.",
   },
   {
     question: "How do verified writers work?",

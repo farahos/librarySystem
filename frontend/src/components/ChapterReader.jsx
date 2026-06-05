@@ -3,7 +3,6 @@ import toast from "react-hot-toast";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Minus, Plus } from "lucide-react";
 import { apiClient, authorProfilePath, storyAuthor } from "../lib/apiClient";
-import AudioPlayer from "./AudioPlayer";
 import { Avatar } from "./UserProfile";
 
 export default function ChapterReader() {
@@ -116,11 +115,6 @@ export default function ChapterReader() {
             </label>
           </div>
 
-          {chapter.audio?.url && (
-            <div className="mt-6 rounded-lg bg-orange-100 p-4">
-              <AudioPlayer src={chapter.audio.url} />
-            </div>
-          )}
           <div className="mt-8 whitespace-pre-line leading-9" style={{ fontSize }}>
             {chapter.content}
           </div>

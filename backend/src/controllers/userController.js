@@ -8,7 +8,7 @@ const usernamePattern = /^[a-z0-9_]{3,30}$/;
 
 const profileAchievements = (user, stats) => {
   const badges = ["New Writer"];
-  if (user.verification?.status === "verified") badges.push("Verified Author");
+  if (user.verification?.status === "approved" || user.roles?.includes("verified_author")) badges.push("Verified Author");
   if ((stats.totalReads || 0) >= 10000) badges.push("Rising Writer");
   if ((stats.topStoryReads || 0) >= 50000) badges.push("Top Story");
   return badges;

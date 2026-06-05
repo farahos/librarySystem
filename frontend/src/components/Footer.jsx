@@ -48,12 +48,12 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto border-t border-gray-200 bg-white text-gray-950">
-      <section className="border-b border-gray-200 bg-gray-50 px-4 py-10">
+    <footer className="mt-auto border-t border-white/10 bg-[#121212] text-white">
+      <section className="border-b border-white/10 px-4 py-10">
         <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-[1fr_auto] md:items-center">
           <div>
             <h2 className="text-2xl font-black">Join Madal on socials</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">
               Follow Somali stories, new chapters, writer updates, and reader conversations.
             </p>
           </div>
@@ -66,7 +66,7 @@ export default function Footer() {
                 key={label}
                 href="#"
                 aria-label={label}
-                className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-gray-900 ring-1 ring-gray-200 transition hover:bg-orange-50 hover:text-orange-700 hover:ring-orange-200"
+                className="flex h-11 w-11 items-center justify-center rounded-lg bg-white/[0.06] text-white ring-1 ring-white/10 transition hover:bg-[#FF7A00] hover:ring-[#FF7A00]"
               >
                 <SocialIcon size={20} />
               </a>
@@ -76,19 +76,19 @@ export default function Footer() {
         </div>
       </section>
 
-      <section className="bg-orange-600 px-4 py-14 text-white">
+      <section className="bg-[#FF7A00] px-4 py-14 text-white">
         <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
           <h2 className="text-3xl font-black">Write your own Somali story</h2>
-          <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-orange-50">
+          <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-white/85">
             Your next chapter could be the one readers remember. Start publishing on Madal today.
           </p>
-          <Link to="/create" className="mt-6 rounded-lg bg-white px-5 py-3 text-sm font-black text-orange-700 hover:bg-orange-50">
+          <Link to="/create" className="mt-6 rounded-lg bg-white px-5 py-3 text-sm font-black text-[#121212] hover:bg-white/90">
             Start Writing
           </Link>
         </div>
       </section>
 
-      <section className="border-b border-gray-200 bg-gray-50 px-4 py-10">
+      <section className="border-b border-white/10 bg-white/[0.03] px-4 py-10">
         <div className="mx-auto grid max-w-7xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <FooterColumn title="Madal Stories" links={storyLinks} />
           <FooterColumn title="Genres" links={genreLinks} />
@@ -104,7 +104,7 @@ export default function Footer() {
               <img src={madalLogo} alt="Madal" className="h-12 w-12 rounded-lg object-cover" />
               <span className="text-2xl font-black">Madal</span>
             </Link>
-            <p className="mt-4 max-w-md text-sm leading-7 text-gray-600">
+            <p className="mt-4 max-w-md text-sm leading-7 text-white/60">
               Madal is a home for Somali stories, readers, and writers. Discover chapters, follow authors, and find the story that stays with you.
             </p>
           </div>
@@ -114,12 +114,12 @@ export default function Footer() {
           <FooterColumn title="Support" links={[["Contact", "/Contact"], ["Terms", "/terms"], ["Privacy", "/privacy"], ["Help", "/help"]]} />
         </div>
 
-        <div className="mx-auto mt-8 flex max-w-7xl flex-col gap-3 border-t border-gray-200 pt-5 text-xs font-semibold text-gray-500 md:flex-row md:items-center md:justify-between">
+        <div className="mx-auto mt-8 flex max-w-7xl flex-col gap-3 border-t border-white/10 pt-5 text-xs font-semibold text-white/45 md:flex-row md:items-center md:justify-between">
           <p>© {currentYear} Madal. All rights reserved.</p>
           <div className="flex flex-wrap gap-4">
-            <Link to="/terms" className="hover:text-orange-700">Terms</Link>
-            <Link to="/privacy" className="hover:text-orange-700">Privacy Policy</Link>
-            <Link to="/Contact" className="hover:text-orange-700">Contact</Link>
+            <Link to="/terms" className="hover:text-[#FF7A00]">Terms</Link>
+            <Link to="/privacy" className="hover:text-[#FF7A00]">Privacy Policy</Link>
+            <Link to="/Contact" className="hover:text-[#FF7A00]">Contact</Link>
           </div>
         </div>
       </section>
@@ -130,11 +130,11 @@ export default function Footer() {
 function FooterColumn({ title, links }) {
   return (
     <div>
-      <h3 className="text-xs font-black uppercase tracking-wide text-gray-950">{title}</h3>
+      <h3 className="text-xs font-black uppercase tracking-wide text-white">{title}</h3>
       <ul className="mt-4 space-y-3">
         {links.map(([label, to]) => (
           <li key={`${title}-${label}`}>
-            <Link to={to} className="text-sm font-semibold text-gray-600 hover:text-orange-700">
+            <Link to={to} className="text-sm font-semibold text-white/60 hover:text-[#FF7A00]">
               {label}
             </Link>
           </li>

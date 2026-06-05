@@ -1,5 +1,5 @@
 import React from "react";
-import { BadgeCheck, BookOpen, Headphones, Heart, Library, PenLine, Users } from "lucide-react";
+import { BadgeCheck, BookOpen, Heart, Library, PenLine, Sparkles, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const journey = [
@@ -10,13 +10,13 @@ const journey = [
   },
   {
     title: "Readers Follow Writers",
-    text: "Profiles, followers, and notifications help readers stay close to the voices they care about.",
+    text: "Profiles, followers, and notifications help readers stay close to the writers they care about.",
     icon: Users,
   },
   {
-    title: "Chapters Can Be Heard",
-    text: "Audio-ready chapters make Madal useful for readers who want to listen as well as read.",
-    icon: Headphones,
+    title: "Discovery Feels Fresh",
+    text: "Categories, featured stories, and reading lists help readers find their next chapter.",
+    icon: Sparkles,
   },
   {
     title: "Identity Matters",
@@ -43,7 +43,7 @@ const About = () => {
               A place where Somali writers build worlds chapter by chapter.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-              Madal is designed for serialized storytelling: one story, many chapters, reader communities, author profiles, and audio-friendly reading.
+              Madal is designed for serialized storytelling: one story, many chapters, reader communities, author profiles, and smooth reading.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/Books" className="rounded-lg bg-orange-600 px-5 py-3 font-black text-white hover:bg-orange-700">

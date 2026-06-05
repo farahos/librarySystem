@@ -5,11 +5,21 @@ const UserContext = createContext(null);
 
 const normalizeUser = (user) => {
   if (!user) return null;
-  const roles = user.roles || (user.role ? [user.role] : []);
+  const roles = [...new Set((user.roles || (user.role ? [user.role] : [])).map((role) => {
+    if (role === "reader" || role === "writer") return "user";
+    if (role === "verified_writer") return "verified_author";
+    return role;
+  }))];
   return {
     ...user,
     roles,
-    role: roles.includes("admin") ? "admin" : roles.includes("writer") ? "writer" : "reader",
+    role: roles.includes("owner")
+      ? "owner"
+      : roles.includes("admin")
+        ? "admin"
+      : roles.includes("moderator")
+        ? "moderator"
+        : "user",
   };
 };
 
@@ -31,7 +41,7 @@ export const UserProvider = ({ children }) => {
     if (payload.token) localStorage.setItem("token", payload.token);
     localStorage.setItem("user", JSON.stringify(nextUser));
     localStorage.setItem("userId", nextUser.id || nextUser._id || "");
-    localStorage.setItem("userRole", nextUser.role || "reader");
+    localStorage.setItem("userRole", nextUser.role || "user");
     localStorage.setItem("expirationTime", String(Date.now() + expiresInSeconds * 1000));
     setUser(nextUser);
   };
@@ -61,8 +71,10 @@ export const UserProvider = ({ children }) => {
       login,
       logout,
       loadingUser,
-      isAdmin: hasRole(user, "admin"),
-      isWriter: hasRole(user, "writer") || hasRole(user, "verified_writer"),
+      isOwner: hasRole(user, "owner"),
+      isAdmin: hasRole(user, "admin") || hasRole(user, "owner"),
+      isModerator: hasRole(user, "moderator") || hasRole(user, "admin") || hasRole(user, "owner"),
+      isWriter: hasRole(user, "user") || hasRole(user, "verified_author"),
     }),
     [user, loadingUser]
   );

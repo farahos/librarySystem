@@ -18,6 +18,8 @@ const EditPost = () => {
   });
   const [loading, setLoading] = useState(false);
   const [loadingStory, setLoadingStory] = useState(true);
+  const [coverFile, setCoverFile] = useState(null);
+  const [coverPreview, setCoverPreview] = useState("");
 
   useEffect(() => {
     setLoadingStory(true);
@@ -33,6 +35,7 @@ const EditPost = () => {
           visibility: story.visibility || "public",
           status: story.status || "ongoing",
         });
+        setCoverPreview(story.coverUrl || "");
       })
       .catch((err) => {
         toast.error(err.response?.data?.message || "Story not found");
@@ -41,15 +44,44 @@ const EditPost = () => {
       .finally(() => setLoadingStory(false));
   }, [id, navigate]);
 
+  const handleCoverChange = (event) => {
+    const file = event.target.files?.[0] || null;
+    setCoverFile(file);
+
+    if (!file) {
+      setCoverPreview(form.coverUrl);
+      return;
+    }
+
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  useEffect(() => {
+    if (!coverFile || !coverPreview.startsWith("blob:")) return undefined;
+    return () => URL.revokeObjectURL(coverPreview);
+  }, [coverFile, coverPreview]);
+
+  const uploadCover = async () => {
+    if (!coverFile) return form.coverUrl;
+
+    const formData = new FormData();
+    formData.append("file", coverFile);
+    const { data } = await apiClient.post("/uploads/image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data.secureUrl;
+  };
+
   const handleUpdate = async (event) => {
     event.preventDefault();
     setLoading(true);
     try {
-      const { data } = await apiClient.put(`/stories/${id}`, form);
+      const coverUrl = await uploadCover();
+      const { data } = await apiClient.put(`/stories/${id}`, { ...form, coverUrl });
       toast.success("Story updated");
       navigate(`/story/${data.story._id}/manage`);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Update failed");
+      toast.error(err.response?.data?.message || err.response?.data?.error || "Update failed");
     } finally {
       setLoading(false);
     }
@@ -65,7 +97,21 @@ const EditPost = () => {
         <h1 className="text-3xl font-black text-gray-950">Update Story</h1>
         <p className="text-sm text-gray-500">Update your story details.</p>
         <Input label="Title" value={form.title} onChange={(value) => setForm((current) => ({ ...current, title: value }))} />
-        <Input label="Cover URL" value={form.coverUrl} onChange={(value) => setForm((current) => ({ ...current, coverUrl: value }))} />
+        <label className="block text-sm font-bold text-gray-700">
+          Cover image
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleCoverChange}
+            className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-3 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-orange-600 file:px-3 file:py-2 file:font-bold file:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+          />
+          {coverFile && <span className="mt-2 block truncate text-xs font-semibold text-gray-500">{coverFile.name}</span>}
+        </label>
+        {coverPreview && (
+          <div className="mx-auto w-full max-w-xs overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+            <img src={coverPreview} alt="Cover preview" className="aspect-[2/3] w-full object-cover" />
+          </div>
+        )}
         <label className="block text-sm font-bold text-gray-700">
           Description
           <textarea

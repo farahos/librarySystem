@@ -11,7 +11,7 @@ import {
   remove,
   update,
 } from "../controllers/storyController.js";
-import { authenticate, optionalAuth } from "../middleware/auth.js";
+import { authenticate, optionalAuth, requireActiveForPlatformAction } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -31,9 +31,9 @@ router.get("/popular", optionalAuth, (req, res) => {
 });
 router.get("/category/:category", optionalAuth, category);
 router.get("/id/:id", optionalAuth, getById);
-router.post("/", authenticate, create);
+router.post("/", authenticate, requireActiveForPlatformAction, create);
 router.get("/:slug", optionalAuth, get);
-router.put("/:id", authenticate, update);
+router.put("/:id", authenticate, requireActiveForPlatformAction, update);
 router.delete("/:id", authenticate, remove);
 router.post("/:id/interactions", authenticate, interact);
 

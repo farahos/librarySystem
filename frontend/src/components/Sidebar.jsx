@@ -1,15 +1,15 @@
 import React from "react";
-import { BarChart2, BookOpen, LayoutDashboard, LogOut, PlusCircle, Tags, Users } from "lucide-react";
+import { BarChart2, BookOpen, ClipboardList, Flag, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Tags, Users } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../hooks/useUser";
 import { madalLogo } from "../lib/apiClient";
 
 const Sidebar = () => {
-  const { user, logout, isAdmin } = useUser();
+  const { user, logout, isAdmin, isModerator, isOwner } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (!isAdmin) return null;
+  if (!isModerator) return null;
 
   const linkClasses = (path) =>
     `flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-bold transition ${
@@ -31,22 +31,44 @@ const Sidebar = () => {
           <LayoutDashboard size={18} />
           Dashboard
         </Link>
+        {isAdmin && (
+          <>
+            <Link to="/admin/users" className={linkClasses("/admin/users")}>
+              <Users size={18} />
+              Users
+            </Link>
+          </>
+        )}
         <Link to="/viewbook" className={linkClasses("/viewbook")}>
           <BookOpen size={18} />
           Stories
         </Link>
-        <Link to="/addbook" className={linkClasses("/addbook")}>
-          <PlusCircle size={18} />
-          New Story
+        <Link to="/admin/reports" className={linkClasses("/admin/reports")}>
+          <Flag size={18} />
+          Reports
         </Link>
-        <Link to="/admin/users" className={linkClasses("/admin/users")}>
-          <Users size={18} />
-          Users
-        </Link>
-        <Link to="/admin/genres" className={linkClasses("/admin/genres")}>
-          <Tags size={18} />
-          Genres
-        </Link>
+        {isAdmin && (
+          <>
+            <Link to="/admin/featured" className={linkClasses("/admin/featured")}>
+              <Sparkles size={18} />
+              Featured
+            </Link>
+            <Link to="/admin/verification" className={linkClasses("/admin/verification")}>
+              <ShieldCheck size={18} />
+              Verification
+            </Link>
+            {isOwner && (
+              <Link to="/admin/logs" className={linkClasses("/admin/logs")}>
+                <ClipboardList size={18} />
+                Moderation Log
+              </Link>
+            )}
+            <Link to="/admin/genres" className={linkClasses("/admin/genres")}>
+              <Tags size={18} />
+              Genres
+            </Link>
+          </>
+        )}
         <Link to="/Books" className={linkClasses("/Books")}>
           <BarChart2 size={18} />
           Public Site

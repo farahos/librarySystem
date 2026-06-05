@@ -37,7 +37,7 @@ async function seed() {
       email: adminEmail,
       passwordHash,
       displayName: "Madal Admin",
-      roles: ["reader", "writer", "admin"],
+      roles: ["user", "admin", "owner"],
       emailVerified: true,
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
@@ -58,8 +58,8 @@ async function seed() {
       email: "writer@madal.so",
       passwordHash,
       displayName: "Sheeko Qore",
-      roles: ["reader", "writer", "verified_writer"],
-      verification: { status: "verified", verifiedAt: new Date() },
+      roles: ["user", "verified_author"],
+      verification: { status: "approved", verifiedAt: new Date() },
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );

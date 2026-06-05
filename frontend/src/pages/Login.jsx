@@ -36,7 +36,7 @@ const Login = () => {
       <section className="w-full max-w-md rounded-lg border border-orange-100 bg-white p-8 shadow-sm">
         <p className="text-sm font-bold uppercase tracking-wide text-orange-600">Madal</p>
         <h1 className="mt-2 text-3xl font-black text-gray-950">Login</h1>
-        <p className="mt-2 text-gray-600">Read. Listen. Write Stories.</p>
+        <p className="mt-2 text-gray-600">Read. Write. Share Stories.</p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <label className="block text-sm font-bold text-gray-700">

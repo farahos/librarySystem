@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 import User from "../models/User.js";
+import { normalizeRoles } from "../utils/roles.js";
 
 const publicUser = (user) => ({
   id: user._id,
@@ -9,7 +10,7 @@ const publicUser = (user) => ({
   email: user.email,
   displayName: user.displayName,
   bio: user.bio,
-  roles: user.roles,
+  roles: normalizeRoles(user.roles || []),
   avatarUrl: user.avatarUrl,
   coverUrl: user.coverUrl,
   verification: user.verification,
@@ -19,7 +20,7 @@ const signToken = (user) =>
   jwt.sign(
     {
       sub: user._id.toString(),
-      roles: user.roles,
+      roles: normalizeRoles(user.roles || []),
     },
     env.jwtSecret,
     { expiresIn: env.jwtExpiresIn }
@@ -27,7 +28,7 @@ const signToken = (user) =>
 
 export async function signup(req, res) {
   try {
-    const { username, email, password, displayName, asWriter = true } = req.body;
+    const { username, email, password, displayName } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ message: "Username, email, and password are required" });
@@ -37,7 +38,7 @@ export async function signup(req, res) {
     if (existing) return res.status(409).json({ message: "User already exists" });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const roles = asWriter ? ["reader", "writer"] : ["reader"];
+    const roles = ["user"];
     const user = await User.create({ username, email, passwordHash, displayName, roles });
 
     res.status(201).json({ user: publicUser(user), token: signToken(user) });
@@ -54,7 +55,7 @@ export async function login(req, res) {
 
     const ok = await bcrypt.compare(password, user.passwordHash || "");
     if (!ok) return res.status(401).json({ message: "Invalid credentials" });
-    if (user.status !== "active") return res.status(403).json({ message: "Account is not active" });
+    if (user.status === "banned") return res.status(403).json({ message: "Account is banned" });
 
     user.lastLoginAt = new Date();
     await user.save();

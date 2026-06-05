@@ -17,6 +17,17 @@ const ChapterSchema = new Schema(
       format: String,
     },
     status: { type: String, enum: ["draft", "published", "scheduled"], default: "draft" },
+    visibility: { type: String, enum: ["public", "hidden"], default: "public" },
+    moderationStatus: {
+      type: String,
+      enum: ["clean", "flagged", "hidden"],
+      default: "clean",
+    },
+    moderationScore: { type: Number, default: 0, min: 0, max: 100 },
+    moderationFlags: [{ type: String }],
+    moderatedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    moderatedAt: { type: Date },
+    moderationReason: { type: String },
     publishDate: { type: Date },
     scheduledFor: { type: Date },
     metrics: {

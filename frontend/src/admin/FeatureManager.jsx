@@ -48,6 +48,7 @@ export default function FeatureManager() {
     originals: false,
     featureSlot: "recommended",
     featureRank: 10,
+    featuredStart: "",
     featuredUntil: "",
   });
 
@@ -103,6 +104,7 @@ export default function FeatureManager() {
       originals: Boolean(selectedPost.original?.enabled),
       featureSlot: selectedPost.featured?.slot || "recommended",
       featureRank: selectedPost.featured?.rank || 10,
+      featuredStart: "",
       featuredUntil: selectedPost.featured?.until
         ? selectedPost.featured.until.slice(0, 10)
         : "",
@@ -122,6 +124,8 @@ export default function FeatureManager() {
           original: form.originals,
           slot: form.featureSlot,
           rank: Number(form.featureRank),
+          startDate: form.featuredStart || null,
+          endDate: form.featuredUntil || null,
           until: form.featuredUntil || null,
         }
       );
@@ -146,7 +150,7 @@ export default function FeatureManager() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-950">Featured Content</h2>
-            <p className="text-sm text-gray-600">Read. Listen. Write Stories.</p>
+            <p className="text-sm text-gray-600">Read. Write. Share Stories.</p>
           </div>
         </div>
       </div>
@@ -285,7 +289,7 @@ export default function FeatureManager() {
               </select>
             </label>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-3">
               <label className="block text-sm font-semibold text-gray-700">
                 Rank
                 <input
@@ -298,6 +302,21 @@ export default function FeatureManager() {
                     setForm((current) => ({
                       ...current,
                       featureRank: event.target.value,
+                    }))
+                  }
+                  />
+              </label>
+
+              <label className="block text-sm font-semibold text-gray-700">
+                Starts on
+                <input
+                  type="date"
+                  className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  value={form.featuredStart}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      featuredStart: event.target.value,
                     }))
                   }
                 />

@@ -6,14 +6,14 @@ import Sidebar from "./components/Sidebar";
 import { useUser } from "./hooks/useUser";
 
 export default function App() {
-  const { isAdmin } = useUser();
+  const { isModerator } = useUser();
 
   useEffect(() => {
     const darkMode = localStorage.getItem("madalDarkMode") === "true";
     document.documentElement.classList.toggle("dark", darkMode);
   }, []);
 
-  if (isAdmin) {
+  if (isModerator) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Sidebar />

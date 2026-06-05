@@ -5,7 +5,7 @@ import { authenticate, authorizeRoles } from "../middleware/auth.js";
 const router = express.Router();
 
 router.post("/", authenticate, create);
-router.get("/", authenticate, authorizeRoles("admin"), list);
-router.patch("/:id/resolve", authenticate, authorizeRoles("admin"), resolve);
+router.get("/", authenticate, authorizeRoles("moderator", "admin"), list);
+router.patch("/:id/resolve", authenticate, authorizeRoles("moderator", "admin"), resolve);
 
 export default router;

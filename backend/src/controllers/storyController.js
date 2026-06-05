@@ -3,11 +3,16 @@ import Chapter from "../models/Chapter.js";
 import Interaction from "../models/Interaction.js";
 import Event from "../models/Event.js";
 import Notification from "../models/Notification.js";
+import Report from "../models/Report.js";
+import ModerationLog from "../models/ModerationLog.js";
+import FeaturedStory from "../models/FeaturedStory.js";
+import { reasonFromScan, scanContent } from "../services/moderationScanner.js";
 import { slugify } from "../utils/slug.js";
 
 const buildStoryFilter = (query, user) => {
   const filter = {};
-  const canIncludePrivate = query.includePrivate === "true" && user?.roles?.includes("admin");
+  const canModerate = user?.roles?.some((role) => ["admin", "owner", "moderator"].includes(role));
+  const canIncludePrivate = query.includePrivate === "true" && canModerate;
   if (!canIncludePrivate) filter.visibility = "public";
   const search = query.search || query.q;
   if (search) filter.$text = { $search: search };
@@ -77,10 +82,25 @@ export async function homeFeed(req, res) {
         .sort(sort)
         .limit(limit);
 
-    const [trending, newest, recommended, weekly, originals, featuredWriters] = await Promise.all([
+    const now = new Date();
+    const [trending, newest, featuredPlacements, weekly, originals, featuredWriters] = await Promise.all([
       storyList({ visibility: "public" }, { "metrics.reads": -1 }),
       storyList({ visibility: "public" }, { createdAt: -1 }),
-      storyList({ visibility: "public", "featured.enabled": true }, { "featured.rank": 1 }),
+      FeaturedStory.find({
+        active: true,
+        startDate: { $lte: now },
+        $or: [{ endDate: null }, { endDate: { $exists: false } }, { endDate: { $gte: now } }],
+      })
+        .populate({
+          path: "storyId",
+          match: { visibility: "public" },
+          populate: [
+            { path: "authorId", select: "username displayName avatarUrl verification roles" },
+            { path: "genres", select: "name slug" },
+          ],
+        })
+        .sort({ rank: 1, startDate: -1 })
+        .limit(10),
       storyList({ visibility: "public" }, { "metrics.views": -1, updatedAt: -1 }),
       storyList({ visibility: "public", "original.enabled": true }, { createdAt: -1 }),
       Story.aggregate([
@@ -91,6 +111,7 @@ export async function homeFeed(req, res) {
       ]),
     ]);
 
+    const recommended = featuredPlacements.map((placement) => placement.storyId).filter(Boolean);
     res.json({ trending, newest, recommended, weekly, originals, featuredWriters });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -110,6 +131,8 @@ export async function create(req, res) {
     if (!status) return res.status(400).json({ message: "Story status is required" });
 
     const slug = req.body.slug || slugify(req.body.title);
+    const scan = scanContent(title, description, Array.isArray(req.body.tags) ? req.body.tags.join(" ") : "");
+    const requestedVisibility = req.body.visibility || "private";
     const story = await Story.create({
       ...req.body,
       title,
@@ -118,7 +141,30 @@ export async function create(req, res) {
       status,
       slug,
       authorId: req.user._id,
+      visibility: scan.risk === "high" ? "hidden" : requestedVisibility,
+      moderationStatus: scan.risk === "low" ? "clean" : scan.risk === "high" ? "hidden" : "flagged",
+      moderationScore: scan.score,
+      moderationFlags: scan.flags,
     });
+
+    if (scan.risk !== "low") {
+      await Report.create({
+        source: "automatic",
+        targetType: "story",
+        targetId: story._id,
+        reason: reasonFromScan(scan),
+        description: `Automatic moderation flagged this story as ${scan.risk} risk.`,
+        status: "pending",
+      });
+      await ModerationLog.create({
+        actorId: req.user._id,
+        action: scan.risk === "high" ? "story_auto_hidden" : "story_auto_flagged",
+        targetType: "story",
+        targetId: story._id,
+        reason: scan.flags.join(", "),
+        metadata: { score: scan.score, risk: scan.risk },
+      });
+    }
 
     await Event.create({ type: "story.created", userId: req.user._id, targetType: "story", targetId: story._id });
     res.status(201).json({ story });
@@ -134,11 +180,22 @@ export async function get(req, res) {
       .populate("genres", "name slug");
 
     if (!story) return res.status(404).json({ message: "Story not found" });
+    const canModerate = req.user?.roles?.some((role) => ["admin", "owner", "moderator"].includes(role));
+    const canSeeArchived = req.user?.roles?.some((role) => ["admin", "owner"].includes(role));
+    const isOwner = story.authorId?._id?.toString() === req.user?._id?.toString() || story.authorId?.toString() === req.user?._id?.toString();
+    if (story.visibility === "archived" && !canSeeArchived && !isOwner) {
+      return res.status(404).json({ message: "Story not found" });
+    }
+    if (story.visibility !== "public" && !canModerate && !isOwner) {
+      return res.status(404).json({ message: "Story not found" });
+    }
 
     story.metrics.views += 1;
     await story.save();
 
-    const chapters = await Chapter.find({ storyId: story._id, status: "published" })
+    const chapterFilter = { storyId: story._id, status: "published" };
+    if (!canModerate && !isOwner) chapterFilter.visibility = "public";
+    const chapters = await Chapter.find(chapterFilter)
       .select("title content chapterNumber readingTime audio status publishDate")
       .sort({ chapterNumber: 1 });
 
@@ -168,8 +225,8 @@ export async function update(req, res) {
     if (!story) return res.status(404).json({ message: "Story not found" });
 
     const isOwner = story.authorId.toString() === req.user._id.toString();
-    const isAdmin = req.user.roles.includes("admin");
-    if (!isOwner && !isAdmin) return res.status(403).json({ message: "Not allowed" });
+    const canModerate = req.user.roles.some((role) => ["admin", "owner", "moderator"].includes(role));
+    if (!isOwner && !canModerate) return res.status(403).json({ message: "Not allowed" });
 
     const allowed = [
       "title",
@@ -192,6 +249,24 @@ export async function update(req, res) {
     if (req.body.status !== undefined && !String(req.body.status).trim()) return res.status(400).json({ message: "Story status is required" });
     if (req.body.title && !req.body.slug) story.slug = slugify(req.body.title);
 
+    if (req.body.title !== undefined || req.body.description !== undefined || req.body.tags !== undefined || req.body.visibility === "public") {
+      const scan = scanContent(story.title, story.description, Array.isArray(story.tags) ? story.tags.join(" ") : "");
+      story.moderationScore = scan.score;
+      story.moderationFlags = scan.flags;
+      story.moderationStatus = scan.risk === "low" ? "clean" : scan.risk === "high" ? "hidden" : "flagged";
+      if (scan.risk === "high") story.visibility = "hidden";
+      if (scan.risk !== "low") {
+        await Report.create({
+          source: "automatic",
+          targetType: "story",
+          targetId: story._id,
+          reason: reasonFromScan(scan),
+          description: `Automatic moderation flagged this story as ${scan.risk} risk.`,
+          status: "pending",
+        });
+      }
+    }
+
     await story.save();
     res.json({ story });
   } catch (err) {
@@ -205,8 +280,8 @@ export async function remove(req, res) {
     if (!story) return res.status(404).json({ message: "Story not found" });
 
     const isOwner = story.authorId.toString() === req.user._id.toString();
-    const isAdmin = req.user.roles.includes("admin");
-    if (!isOwner && !isAdmin) return res.status(403).json({ message: "Not allowed" });
+    const canModerate = req.user.roles.some((role) => ["admin", "owner", "moderator"].includes(role));
+    if (!isOwner && !canModerate) return res.status(403).json({ message: "Not allowed" });
 
     story.visibility = "archived";
     await story.save();

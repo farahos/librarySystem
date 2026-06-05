@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { BookOpen, Eye, Heart, ListPlus, MessageCircle, Plus, Trash2, Volume2 } from "lucide-react";
+import { BookOpen, Eye, Heart, ListPlus, MessageCircle, Plus, Trash2 } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import AudioPlayer from "./AudioPlayer.jsx";
 import { apiClient, authorProfilePath, formatCount, storyAuthor, storyCover } from "../lib/apiClient";
 import { useUser } from "../hooks/useUser.jsx";
 import { Avatar } from "./UserProfile.jsx";
@@ -87,8 +86,6 @@ const PostDetail = () => {
       .then(({ data }) => setComments(data.comments || []))
       .catch(() => setComments([]));
   }, [activeChapter?._id]);
-
-  const chapterAudio = useMemo(() => activeChapter?.audio?.url, [activeChapter]);
 
   const recordInteraction = async (action) => {
     if (!token) {
@@ -214,7 +211,6 @@ const PostDetail = () => {
               <Metric icon={BookOpen} value={story.metrics?.reads || 0} label="Reads" />
               <Metric icon={Heart} value={story.metrics?.likes || 0} label="Likes" />
               <Metric icon={MessageCircle} value={story.metrics?.comments || 0} label="Comments" />
-              <Metric icon={Volume2} value={story.metrics?.audioListens || 0} label="Listens" />
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <button onClick={() => recordInteraction("like")} className="rounded-lg bg-orange-600 px-4 py-2 font-black hover:bg-orange-700">
@@ -312,14 +308,7 @@ const PostDetail = () => {
               {chapterLoading ? (
                 <p className="mt-8 text-gray-500">Loading chapter...</p>
               ) : (
-                <>
-                  {chapterAudio && (
-                    <div className="mt-5 rounded-lg bg-orange-50 p-4">
-                      <AudioPlayer src={chapterAudio} />
-                    </div>
-                  )}
-                  <div className="mt-8 whitespace-pre-line text-lg leading-9 text-gray-800">{activeChapter.content}</div>
-                </>
+                <div className="mt-8 whitespace-pre-line text-lg leading-9 text-gray-800">{activeChapter.content}</div>
               )}
 
               <div ref={commentsRef} className="mt-10 scroll-mt-24 border-t border-gray-100 pt-6">

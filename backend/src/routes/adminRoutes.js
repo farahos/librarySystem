@@ -5,8 +5,14 @@ import {
   approveVerification,
   createAdminGenre,
   deleteAdminGenre,
+  disciplineUser,
+  featuredStories,
   featureStory,
   listUsers,
+  moderateComment,
+  moderateStory,
+  moderationLogs,
+  requestMoreVerificationInfo,
   rejectVerification,
   suspendUser,
   updateAdminGenre,
@@ -14,24 +20,39 @@ import {
   updateUserRole,
   verificationRequests,
 } from "../controllers/adminController.js";
+import { list as listReports, resolve as resolveReport } from "../controllers/reportController.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.use(authenticate, authorizeRoles("admin"));
+const moderatorOrAbove = authorizeRoles("moderator", "admin", "owner");
+const adminOrOwner = authorizeRoles("admin", "owner");
+const ownerOnly = authorizeRoles("owner");
 
-router.get("/analytics", analytics);
-router.get("/users", listUsers);
-router.put("/users/:id", updateUser);
-router.patch("/users/:id/role", updateUserRole);
-router.patch("/users/:id/suspend", suspendUser);
-router.patch("/stories/:id/feature", featureStory);
-router.get("/verification-requests", verificationRequests);
-router.patch("/verification-requests/:id/approve", approveVerification);
-router.patch("/verification-requests/:id/reject", rejectVerification);
-router.get("/genres", adminGenres);
-router.post("/genres", createAdminGenre);
-router.patch("/genres/:id", updateAdminGenre);
-router.delete("/genres/:id", deleteAdminGenre);
+router.use(authenticate);
+
+router.get("/analytics", moderatorOrAbove, analytics);
+router.get("/reports", moderatorOrAbove, listReports);
+router.patch("/reports/:id/resolve", moderatorOrAbove, resolveReport);
+router.patch("/stories/:id/moderate", moderatorOrAbove, moderateStory);
+router.patch("/comments/:id/moderate", moderatorOrAbove, moderateComment);
+router.patch("/users/:id/discipline", moderatorOrAbove, disciplineUser);
+router.patch("/users/:id/suspend", moderatorOrAbove, suspendUser);
+
+router.get("/users", adminOrOwner, listUsers);
+router.put("/users/:id", adminOrOwner, updateUser);
+router.patch("/users/:id/role", adminOrOwner, updateUserRole);
+router.get("/featured", adminOrOwner, featuredStories);
+router.patch("/stories/:id/feature", adminOrOwner, featureStory);
+router.get("/verification-requests", adminOrOwner, verificationRequests);
+router.patch("/verification-requests/:id/approve", adminOrOwner, approveVerification);
+router.patch("/verification-requests/:id/reject", adminOrOwner, rejectVerification);
+router.patch("/verification-requests/:id/more-info", adminOrOwner, requestMoreVerificationInfo);
+router.get("/genres", adminOrOwner, adminGenres);
+router.post("/genres", adminOrOwner, createAdminGenre);
+router.patch("/genres/:id", adminOrOwner, updateAdminGenre);
+router.delete("/genres/:id", adminOrOwner, deleteAdminGenre);
+
+router.get("/logs", ownerOnly, moderationLogs);
 
 export default router;

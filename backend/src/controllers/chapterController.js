@@ -4,6 +4,9 @@ import Interaction from "../models/Interaction.js";
 import AudioFile from "../models/AudioFile.js";
 import Follow from "../models/Follow.js";
 import Notification from "../models/Notification.js";
+import Report from "../models/Report.js";
+import ModerationLog from "../models/ModerationLog.js";
+import { reasonFromScan, scanContent } from "../services/moderationScanner.js";
 import { minutesToRead } from "../utils/slug.js";
 
 export async function list(req, res) {
@@ -12,11 +15,13 @@ export async function list(req, res) {
     if (req.query.includeDrafts === "true") {
       const story = await Story.findById(req.params.storyId);
       const isOwner = story?.authorId?.toString() === req.user?._id?.toString();
-      const isAdmin = req.user?.roles?.includes("admin");
-      if (!isOwner && !isAdmin) filter.status = "published";
+      const canModerate = req.user?.roles?.some((role) => ["admin", "owner", "moderator"].includes(role));
+      if (!isOwner && !canModerate) filter.status = "published";
     } else {
       filter.status = "published";
     }
+    const canModerate = req.user?.roles?.some((role) => ["admin", "owner", "moderator"].includes(role));
+    if (!canModerate) filter.visibility = "public";
     const chapters = await Chapter.find(filter).sort({ chapterNumber: 1 });
     res.json({ chapters });
   } catch (err) {
@@ -30,15 +35,41 @@ export async function create(req, res) {
     if (!story) return res.status(404).json({ message: "Story not found" });
 
     const isOwner = story.authorId.toString() === req.user._id.toString();
-    const isAdmin = req.user.roles.includes("admin");
-    if (!isOwner && !isAdmin) return res.status(403).json({ message: "Not allowed" });
+    const canModerate = req.user.roles.some((role) => ["admin", "owner", "moderator"].includes(role));
+    if (!isOwner && !canModerate) return res.status(403).json({ message: "Not allowed" });
 
+    const scan = scanContent(req.body.title, req.body.content);
+    const requestedStatus = req.body.status;
     const chapter = await Chapter.create({
       ...req.body,
       storyId: story._id,
       readingTime: req.body.readingTime || minutesToRead(req.body.content),
-      publishDate: req.body.status === "published" ? new Date() : req.body.publishDate,
+      status: scan.risk === "high" && requestedStatus === "published" ? "draft" : requestedStatus,
+      visibility: scan.risk === "high" ? "hidden" : "public",
+      moderationStatus: scan.risk === "low" ? "clean" : scan.risk === "high" ? "hidden" : "flagged",
+      moderationScore: scan.score,
+      moderationFlags: scan.flags,
+      publishDate: requestedStatus === "published" && scan.risk !== "high" ? new Date() : req.body.publishDate,
     });
+
+    if (scan.risk !== "low") {
+      await Report.create({
+        source: "automatic",
+        targetType: "chapter",
+        targetId: chapter._id,
+        reason: reasonFromScan(scan),
+        description: `Automatic moderation flagged this chapter as ${scan.risk} risk.`,
+        status: "pending",
+      });
+      await ModerationLog.create({
+        actorId: req.user._id,
+        action: scan.risk === "high" ? "chapter_auto_hidden" : "chapter_auto_flagged",
+        targetType: "chapter",
+        targetId: chapter._id,
+        reason: scan.flags.join(", "),
+        metadata: { score: scan.score, risk: scan.risk },
+      });
+    }
 
     if (chapter.status === "published") {
       const followers = await Follow.find({ followeeId: story.authorId }).select("followerId");
@@ -78,8 +109,14 @@ export async function get(req, res) {
     if (chapter.status !== "published") {
       const story = await Story.findById(chapter.storyId);
       const isOwner = story?.authorId?.toString() === req.user?._id?.toString();
-      const isAdmin = req.user?.roles?.includes("admin");
-      if (!isOwner && !isAdmin) return res.status(404).json({ message: "Chapter not found" });
+      const canModerate = req.user?.roles?.some((role) => ["admin", "owner", "moderator"].includes(role));
+      if (!isOwner && !canModerate) return res.status(404).json({ message: "Chapter not found" });
+    }
+
+    if (chapter.visibility === "hidden") {
+      const story = await Story.findById(chapter.storyId);
+      const canModerate = req.user?.roles?.some((role) => ["admin", "owner", "moderator"].includes(role));
+      if (!canModerate) return res.status(404).json({ message: "Chapter not found" });
     }
 
     chapter.metrics.views += 1;
@@ -98,15 +135,33 @@ export async function update(req, res) {
 
     const story = await Story.findById(chapter.storyId);
     const isOwner = story?.authorId.toString() === req.user._id.toString();
-    const isAdmin = req.user.roles.includes("admin");
-    if (!isOwner && !isAdmin) return res.status(403).json({ message: "Not allowed" });
+    const canModerate = req.user.roles.some((role) => ["admin", "owner", "moderator"].includes(role));
+    if (!isOwner && !canModerate) return res.status(403).json({ message: "Not allowed" });
 
     const wasPublished = chapter.status === "published";
     ["title", "content", "chapterNumber", "audio", "status", "publishDate", "scheduledFor"].forEach((key) => {
       if (req.body[key] !== undefined) chapter[key] = req.body[key];
     });
     if (req.body.content) chapter.readingTime = minutesToRead(req.body.content);
-    if (req.body.status === "published" && !wasPublished) chapter.publishDate = new Date();
+    if (req.body.content !== undefined || req.body.title !== undefined || req.body.status === "published") {
+      const scan = scanContent(chapter.title, chapter.content);
+      chapter.moderationScore = scan.score;
+      chapter.moderationFlags = scan.flags;
+      chapter.moderationStatus = scan.risk === "low" ? "clean" : scan.risk === "high" ? "hidden" : "flagged";
+      chapter.visibility = scan.risk === "high" ? "hidden" : chapter.visibility || "public";
+      if (scan.risk === "high" && chapter.status === "published") chapter.status = "draft";
+      if (scan.risk !== "low") {
+        await Report.create({
+          source: "automatic",
+          targetType: "chapter",
+          targetId: chapter._id,
+          reason: reasonFromScan(scan),
+          description: `Automatic moderation flagged this chapter as ${scan.risk} risk.`,
+          status: "pending",
+        });
+      }
+    }
+    if (chapter.status === "published" && !wasPublished) chapter.publishDate = new Date();
     if (req.body.status === "draft") {
       chapter.scheduledFor = undefined;
       chapter.publishDate = undefined;
@@ -126,8 +181,8 @@ export async function remove(req, res) {
 
     const story = await Story.findById(chapter.storyId);
     const isOwner = story?.authorId?.toString() === req.user._id.toString();
-    const isAdmin = req.user.roles.includes("admin");
-    if (!isOwner && !isAdmin) return res.status(403).json({ message: "Not allowed" });
+    const canModerate = req.user.roles.some((role) => ["admin", "owner", "moderator"].includes(role));
+    if (!isOwner && !canModerate) return res.status(403).json({ message: "Not allowed" });
 
     await chapter.deleteOne();
     res.json({ message: "Chapter deleted" });
@@ -143,8 +198,8 @@ export async function duplicate(req, res) {
 
     const story = await Story.findById(chapter.storyId);
     const isOwner = story?.authorId?.toString() === req.user._id.toString();
-    const isAdmin = req.user.roles.includes("admin");
-    if (!isOwner && !isAdmin) return res.status(403).json({ message: "Not allowed" });
+    const canModerate = req.user.roles.some((role) => ["admin", "owner", "moderator"].includes(role));
+    if (!isOwner && !canModerate) return res.status(403).json({ message: "Not allowed" });
 
     const maxChapter = await Chapter.findOne({ storyId: story._id }).sort({ chapterNumber: -1 }).select("chapterNumber");
     const duplicateChapter = await Chapter.create({
@@ -170,8 +225,8 @@ export async function changeStatus(req, res) {
 
     const story = await Story.findById(chapter.storyId);
     const isOwner = story?.authorId?.toString() === req.user._id.toString();
-    const isAdmin = req.user.roles.includes("admin");
-    if (!isOwner && !isAdmin) return res.status(403).json({ message: "Not allowed" });
+    const canModerate = req.user.roles.some((role) => ["admin", "owner", "moderator"].includes(role));
+    if (!isOwner && !canModerate) return res.status(403).json({ message: "Not allowed" });
 
     const nextStatus = req.body.status;
     if (!["draft", "published", "scheduled"].includes(nextStatus)) {
@@ -180,7 +235,27 @@ export async function changeStatus(req, res) {
 
     const wasPublished = chapter.status === "published";
     chapter.status = nextStatus;
-    if (nextStatus === "published" && !wasPublished) chapter.publishDate = new Date();
+    if (nextStatus === "published") {
+      const scan = scanContent(chapter.title, chapter.content);
+      chapter.moderationScore = scan.score;
+      chapter.moderationFlags = scan.flags;
+      chapter.moderationStatus = scan.risk === "low" ? "clean" : scan.risk === "high" ? "hidden" : "flagged";
+      if (scan.risk === "high") {
+        chapter.status = "draft";
+        chapter.visibility = "hidden";
+      }
+      if (scan.risk !== "low") {
+        await Report.create({
+          source: "automatic",
+          targetType: "chapter",
+          targetId: chapter._id,
+          reason: reasonFromScan(scan),
+          description: `Automatic moderation flagged this chapter as ${scan.risk} risk.`,
+          status: "pending",
+        });
+      }
+    }
+    if (chapter.status === "published" && !wasPublished) chapter.publishDate = new Date();
     if (nextStatus === "draft") {
       chapter.publishDate = undefined;
       chapter.scheduledFor = undefined;
@@ -202,8 +277,8 @@ export async function reorder(req, res) {
     if (!story) return res.status(404).json({ message: "Story not found" });
 
     const isOwner = story.authorId.toString() === req.user._id.toString();
-    const isAdmin = req.user.roles.includes("admin");
-    if (!isOwner && !isAdmin) return res.status(403).json({ message: "Not allowed" });
+    const canModerate = req.user.roles.some((role) => ["admin", "owner", "moderator"].includes(role));
+    if (!isOwner && !canModerate) return res.status(403).json({ message: "Not allowed" });
 
     const orderedIds = Array.isArray(req.body.orderedIds) ? req.body.orderedIds : [];
     if (orderedIds.length === 0) return res.status(400).json({ message: "orderedIds is required" });
@@ -262,21 +337,26 @@ export async function reader(req, res) {
       .populate("authorId", "username displayName avatarUrl verification roles")
       .lean();
     if (!story) return res.status(404).json({ message: "Story not found" });
+    const isOwner = story.authorId?._id?.toString() === req.user?._id?.toString() || story.authorId?.toString() === req.user?._id?.toString();
+    const canModerate = req.user?.roles?.some((role) => ["admin", "owner", "moderator"].includes(role));
+    if (story.visibility !== "public" && !isOwner && !canModerate) {
+      return res.status(404).json({ message: "Story not found" });
+    }
 
     const chapterNumber = Number(req.params.chapterNumber);
+    const chapterListFilter = { storyId: story._id, status: "published" };
+    if (!isOwner && !canModerate) chapterListFilter.visibility = "public";
     const [chapter, chapters] = await Promise.all([
       Chapter.findOne({ storyId: story._id, chapterNumber }).lean(),
-      Chapter.find({ storyId: story._id, status: "published" })
+      Chapter.find(chapterListFilter)
         .select("title chapterNumber")
         .sort({ chapterNumber: 1 })
         .lean(),
     ]);
 
     if (!chapter) return res.status(404).json({ message: "Chapter not found" });
-    if (chapter.status !== "published") {
-      const isOwner = story.authorId?._id?.toString() === req.user?._id?.toString() || story.authorId?.toString() === req.user?._id?.toString();
-      const isAdmin = req.user?.roles?.includes("admin");
-      if (!isOwner && !isAdmin) return res.status(404).json({ message: "Chapter not found" });
+    if (chapter.status !== "published" || chapter.visibility === "hidden") {
+      if (!isOwner && !canModerate) return res.status(404).json({ message: "Chapter not found" });
     }
 
     const currentIndex = chapters.findIndex((item) => Number(item.chapterNumber) === chapterNumber);
