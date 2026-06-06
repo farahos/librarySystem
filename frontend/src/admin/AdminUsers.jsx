@@ -13,6 +13,8 @@ export default function AdminUsers() {
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("");
   const [openId, setOpenId] = useState("");
+  const [disciplineCenter, setDisciplineCenter] = useState(null);
+  const [disciplineLoading, setDisciplineLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const { isOwner } = useUser();
 
@@ -52,6 +54,26 @@ export default function AdminUsers() {
 
   const setRoleEnabled = async (user, targetRole, enabled) => {
     await apiClient.patch(`/admin/users/${user._id}/role`, { role: targetRole, enabled });
+    setOpenId("");
+    load();
+  };
+
+  const openDisciplineCenter = async (user) => {
+    setOpenId("");
+    setDisciplineLoading(true);
+    try {
+      const { data } = await apiClient.get(`/admin/users/${user._id}/discipline-center`);
+      setDisciplineCenter(data);
+    } finally {
+      setDisciplineLoading(false);
+    }
+  };
+
+  const transferOwnership = async (user) => {
+    if (!window.confirm(`Transfer ownership to ${user.username}? Only one owner can exist.`)) return;
+    await apiClient.patch(`/admin/users/${user._id}/transfer-ownership`, {
+      reason: "Manual owner transfer from users page",
+    });
     setOpenId("");
     load();
   };
@@ -140,6 +162,7 @@ export default function AdminUsers() {
                       <div className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
                         <ActionLink to={`/user/${user.username}`} label="View profile" />
                         <ActionLink to={`/Books?authorId=${user._id}`} label="View stories" />
+                        <ActionButton label="Discipline Center" onClick={() => openDisciplineCenter(user)} />
                         <ActionButton label="Warn" onClick={() => discipline(user, "warn")} />
                         <ActionButton label="Suspend" onClick={() => discipline(user, "suspend", 7)} />
                         <ActionButton label="Ban" danger onClick={() => discipline(user, "ban")} />
@@ -154,6 +177,9 @@ export default function AdminUsers() {
                           label={isVerified ? "Remove Verification" : "Verify Author"}
                           onClick={() => setRoleEnabled(user, "verified_author", !isVerified)}
                         />
+                        {isOwner && !user.roles?.includes("owner") && (
+                          <ActionButton label="Transfer Ownership" onClick={() => transferOwnership(user)} />
+                        )}
                       </div>
                     )}
                   </div>
@@ -161,6 +187,60 @@ export default function AdminUsers() {
               );
             })}
         </section>
+
+        {(disciplineCenter || disciplineLoading) && (
+          <section className="mt-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-black text-gray-950">Discipline Center</h2>
+                <p className="text-sm font-semibold text-gray-500">
+                  {disciplineCenter?.user?.displayName || disciplineCenter?.user?.username || "Loading user history"}
+                </p>
+              </div>
+              <button onClick={() => setDisciplineCenter(null)} className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-black text-gray-700">
+                Close
+              </button>
+            </div>
+
+            {disciplineLoading && <p className="mt-4 text-sm font-bold text-gray-500">Loading moderation history...</p>}
+
+            {!disciplineLoading && disciplineCenter && (
+              <div className="mt-5 grid gap-5 lg:grid-cols-[280px_1fr]">
+                <div className="rounded-lg bg-gray-50 p-4">
+                  <p className="text-sm font-black uppercase tracking-wide text-gray-500">Current status</p>
+                  <p className="mt-2 text-2xl font-black capitalize text-gray-950">{disciplineCenter.user.status}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {disciplineCenter.user.roles?.map((item) => (
+                      <span key={item} className="rounded-lg bg-white px-2 py-1 text-xs font-black text-gray-700 ring-1 ring-gray-200">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-4 text-sm font-bold text-gray-600">{disciplineCenter.reports.length} related reports</p>
+                </div>
+
+                <div className="space-y-3">
+                  {disciplineCenter.timeline.length === 0 && (
+                    <p className="rounded-lg bg-gray-50 p-4 text-sm font-bold text-gray-500">No moderation history yet.</p>
+                  )}
+                  {disciplineCenter.timeline.map((item, index) => (
+                    <article key={`${item.type}-${item.createdAt}-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-black text-gray-950">{item.action}</p>
+                          {item.targetTitle && <p className="mt-1 text-sm font-semibold text-gray-600">{item.targetTitle}</p>}
+                          {item.reason && <p className="mt-1 text-sm text-gray-700">{item.reason}</p>}
+                          {item.status && <p className="mt-1 text-xs font-black uppercase tracking-wide text-orange-600">{item.status}</p>}
+                        </div>
+                        <time className="text-sm font-bold text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</time>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
       </div>
     </main>
   );

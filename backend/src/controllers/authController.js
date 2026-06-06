@@ -57,6 +57,10 @@ export async function login(req, res) {
     if (!ok) return res.status(401).json({ message: "Invalid credentials" });
     if (user.status === "banned") return res.status(403).json({ message: "Account is banned" });
 
+    user.roles = normalizeRoles(user.roles || []);
+    if (user.verification?.status === "verified") {
+      user.verification.status = "approved";
+    }
     user.lastLoginAt = new Date();
     await user.save();
 

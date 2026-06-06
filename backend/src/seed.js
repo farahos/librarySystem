@@ -42,6 +42,7 @@ async function seed() {
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
+  await User.updateMany({ _id: { $ne: admin._id }, roles: "owner" }, { $pull: { roles: "owner" } });
 
   for (const [index, name] of genres.entries()) {
     await Genre.findOneAndUpdate(

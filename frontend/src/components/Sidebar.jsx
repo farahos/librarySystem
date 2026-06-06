@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart2, BookOpen, ClipboardList, Flag, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Tags, Users } from "lucide-react";
+import { BarChart2, BookOpen, ClipboardList, Crown, Flag, LayoutDashboard, LogOut, Shield, ShieldCheck, Sparkles, Tags, Users } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../hooks/useUser";
 import { madalLogo } from "../lib/apiClient";
@@ -31,6 +31,12 @@ const Sidebar = () => {
           <LayoutDashboard size={18} />
           Dashboard
         </Link>
+        {isOwner && (
+          <Link to="/admin/owner-controls" className={linkClasses("/admin/owner-controls")}>
+            <Crown size={18} />
+            Owner Controls
+          </Link>
+        )}
         {isAdmin && (
           <>
             <Link to="/admin/users" className={linkClasses("/admin/users")}>
@@ -46,6 +52,10 @@ const Sidebar = () => {
         <Link to="/admin/reports" className={linkClasses("/admin/reports")}>
           <Flag size={18} />
           Reports
+        </Link>
+        <Link to="/admin/moderation" className={linkClasses("/admin/moderation")}>
+          <Shield size={18} />
+          Moderation
         </Link>
         {isAdmin && (
           <>

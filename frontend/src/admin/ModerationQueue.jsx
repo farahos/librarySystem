@@ -22,6 +22,7 @@ const reasonLabels = {
 };
 
 function targetTitle(report) {
+  if (report.preview?.title) return report.preview.title;
   const target = report.target;
   if (report.targetType === "story") return target?.title || "Story";
   if (report.targetType === "chapter") return target?.title || "Chapter";
@@ -31,6 +32,7 @@ function targetTitle(report) {
 }
 
 function targetUser(report) {
+  if (report.preview?.authorName) return report.preview.authorName;
   const target = report.target;
   return (
     target?.authorId?.username ||
@@ -142,15 +144,32 @@ export default function ModerationQueue({ embedded = false }) {
                     {report.targetType} report · {report.reportCount || 1} report{(report.reportCount || 1) === 1 ? "" : "s"}
                   </p>
                   <h3 className="mt-1 line-clamp-2 text-lg font-black text-gray-950">{targetTitle(report)}</h3>
-                  <p className="text-sm font-semibold text-gray-600">{targetUser(report)}</p>
+                  <p className="text-sm font-semibold text-gray-600">
+                    By {targetUser(report)} · Reported by {report.preview?.reporterName || report.reporterId?.displayName || report.reporterId?.username || "Unknown"}
+                  </p>
                 </div>
                 <span className="rounded-lg bg-white px-3 py-1 text-xs font-black text-gray-700 ring-1 ring-gray-200">
                   {reasonLabels[report.reason] || report.reason}
                 </span>
               </div>
 
+              <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_220px]">
+                <div className="rounded-lg bg-white p-3 text-sm text-gray-700">
+                  <p className="text-xs font-black uppercase tracking-wide text-gray-400">Reported content</p>
+                  <p className="mt-1 line-clamp-5 whitespace-pre-wrap">{report.preview?.content || "No preview available."}</p>
+                </div>
+                <div className="rounded-lg bg-white p-3 text-sm">
+                  <p className="text-xs font-black uppercase tracking-wide text-gray-400">Context</p>
+                  <p className="mt-1 font-bold text-gray-700">Status: {report.preview?.status || report.status}</p>
+                  {report.preview?.authorEmail && <p className="mt-1 truncate text-gray-600">{report.preview.authorEmail}</p>}
+                  {report.preview?.metadata?.storyTitle && <p className="mt-1 text-gray-600">Story: {report.preview.metadata.storyTitle}</p>}
+                  {report.preview?.metadata?.chapterTitle && <p className="mt-1 text-gray-600">Chapter: {report.preview.metadata.chapterTitle}</p>}
+                  {report.preview?.metadata?.roles && <p className="mt-1 text-gray-600">Roles: {report.preview.metadata.roles.join(", ")}</p>}
+                </div>
+              </div>
+
               {(report.description || report.details) && (
-                <p className="mt-3 rounded-lg bg-white p-3 text-sm text-gray-700">{report.description || report.details}</p>
+                <p className="mt-3 rounded-lg bg-orange-50 p-3 text-sm font-semibold text-orange-900">{report.description || report.details}</p>
               )}
 
               {report.status === "pending" && (

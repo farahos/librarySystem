@@ -46,11 +46,81 @@ async function logAction(actorId, action, targetType, targetId, reason, metadata
 }
 
 async function getTarget(targetType, targetId) {
-  if (targetType === "story") return Story.findById(targetId).populate("authorId", "username displayName email status");
-  if (targetType === "chapter") return Chapter.findById(targetId).populate("storyId", "title slug authorId");
-  if (targetType === "comment") return Comment.findById(targetId).populate("authorId", "username displayName email status");
+  if (targetType === "story") return Story.findById(targetId).populate("authorId", "username displayName email status roles");
+  if (targetType === "chapter") {
+    return Chapter.findById(targetId).populate({
+      path: "storyId",
+      select: "title slug authorId visibility",
+      populate: { path: "authorId", select: "username displayName email status roles" },
+    });
+  }
+  if (targetType === "comment") {
+    return Comment.findById(targetId)
+      .populate("authorId", "username displayName email status roles")
+      .populate("storyId", "title slug visibility")
+      .populate("chapterId", "title chapterNumber");
+  }
   if (targetType === "user") return User.findById(targetId).select("-passwordHash");
   return null;
+}
+
+function buildPreview(report, target) {
+  const reporter = report.reporterId;
+  const base = {
+    reporterName: reporter?.displayName || reporter?.username || (report.source === "automatic" ? "Automatic moderation" : "Unknown reporter"),
+    reporterEmail: reporter?.email,
+    reason: report.reason,
+    description: report.description || report.details,
+    targetType: report.targetType,
+  };
+
+  if (!target) return { ...base, title: "Content unavailable", content: "This target may have been deleted." };
+
+  if (report.targetType === "story") {
+    return {
+      ...base,
+      title: target.title,
+      authorName: target.authorId?.displayName || target.authorId?.username,
+      authorEmail: target.authorId?.email,
+      content: target.description,
+      status: target.visibility,
+      metadata: { slug: target.slug, moderationStatus: target.moderationStatus },
+    };
+  }
+
+  if (report.targetType === "chapter") {
+    return {
+      ...base,
+      title: target.title,
+      authorName: target.storyId?.authorId?.displayName || target.storyId?.authorId?.username,
+      authorEmail: target.storyId?.authorId?.email,
+      content: target.content?.slice(0, 700),
+      status: target.visibility || target.status,
+      metadata: { storyTitle: target.storyId?.title, chapterNumber: target.chapterNumber },
+    };
+  }
+
+  if (report.targetType === "comment") {
+    return {
+      ...base,
+      title: target.storyId?.title || "Comment",
+      authorName: target.authorId?.displayName || target.authorId?.username,
+      authorEmail: target.authorId?.email,
+      content: target.content,
+      status: target.status,
+      metadata: { chapterTitle: target.chapterId?.title, chapterNumber: target.chapterId?.chapterNumber },
+    };
+  }
+
+  return {
+    ...base,
+    title: target.displayName || target.username,
+    authorName: target.username,
+    authorEmail: target.email,
+    content: target.bio,
+    status: target.status,
+    metadata: { roles: target.roles },
+  };
 }
 
 async function getResponsibleUserId(report, target) {
@@ -77,6 +147,7 @@ async function hydrateReports(reports) {
     hydrated.push({
       ...report.toObject(),
       target,
+      preview: buildPreview(report, target),
       reportCount,
     });
   }
@@ -159,6 +230,13 @@ async function applyAction(report, req) {
   const action = req.body.action || req.body.adminAction || "dismiss";
   const reason = req.body.reason || req.body.notes || report.reason;
   const target = await getTarget(report.targetType, report.targetId);
+  const actorRole = highestRole(req.user);
+  const adminOnlyActions = ["delete_comment", "suspend_user", "ban_user"];
+  if (adminOnlyActions.includes(action) && !["admin", "owner"].includes(actorRole)) {
+    const error = new Error("Only admins or owners can perform this report action");
+    error.statusCode = 403;
+    throw error;
+  }
 
   if (action === "dismiss") {
     return { status: "dismissed", result: null };
@@ -259,6 +337,6 @@ export async function resolve(req, res) {
 
     res.json({ report, result: actionResult.result });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.statusCode || 500).json({ error: err.message });
   }
 }

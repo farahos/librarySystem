@@ -29,6 +29,8 @@ import ModerationQueue from './admin/ModerationQueue.jsx';
 import FeatureManager from './admin/FeatureManager.jsx';
 import AdminVerification from './admin/AdminVerification.jsx';
 import ModerationLogPage from './admin/ModerationLogPage.jsx';
+import OwnerControls from './admin/OwnerControls.jsx';
+import ModerationOverview from './admin/ModerationOverview.jsx';
 import AddChapter from './components/AddChapter.jsx';
 import UserProfile from './components/UserProfile.jsx';
 import EditProfile from './components/EditProfile.jsx';
@@ -104,6 +106,10 @@ const router = createBrowserRouter([
           element: <AdminUsers /> },
            { path: '/admin/reports',
           element: <ModerationQueue /> },
+           { path: '/admin/moderation',
+          element: <ModerationOverview /> },
+           { path: '/admin/owner-controls',
+          element: <OwnerControls /> },
            { path: '/admin/featured',
           element: <main className="min-h-screen bg-gray-50 px-4 py-8"><div className="mx-auto max-w-7xl"><FeatureManager /></div></main> },
            { path: '/admin/verification',

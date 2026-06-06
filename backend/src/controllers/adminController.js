@@ -25,71 +25,99 @@ async function logAction(actorId, action, targetType, targetId, reason, metadata
 
 export async function analytics(req, res) {
   try {
-    const today = dayStart();
     const [
       totalUsers,
-      activeUsers,
       stories,
-      chapters,
       comments,
       reports,
-      pendingReports,
-      actionedReports,
-      dismissedReports,
-      escalatedReports,
       suspendedUsers,
-      bannedUsers,
       verificationRequests,
-      dailyNewUsers,
-      dailyStoryPublishes,
-      dailyReadsAgg,
-      topStories,
+      featuredPlacement,
     ] = await Promise.all([
       User.countDocuments(),
-      User.countDocuments({ status: { $in: ["active", "warned"] } }),
       Story.countDocuments(),
-      Chapter.countDocuments(),
       Comment.countDocuments(),
       Report.countDocuments(),
-      Report.countDocuments({ status: "pending" }),
-      Report.countDocuments({ status: "action_taken" }),
-      Report.countDocuments({ status: "dismissed" }),
-      Report.countDocuments({ status: "escalated" }),
       User.countDocuments({ status: "suspended" }),
-      User.countDocuments({ status: "banned" }),
       VerificationRequest.countDocuments({ status: "pending" }),
-      User.countDocuments({ createdAt: { $gte: today } }),
-      Chapter.countDocuments({ status: "published", publishDate: { $gte: today } }),
-      Chapter.aggregate([{ $group: { _id: null, reads: { $sum: "$metrics.reads" } } }]),
-      Story.find({ visibility: "public" })
-        .select("title slug metrics featured original")
-        .sort({ "metrics.reads": -1 })
-        .limit(10),
+      FeaturedStory.findOne({ active: true })
+        .populate("storyId", "title slug")
+        .sort({ startDate: -1 })
+        .lean(),
     ]);
-
-    const dailyReads = dailyReadsAgg[0]?.reads || 0;
 
     res.json({
       totalUsers,
-      activeUsers,
       users: totalUsers,
       stories,
-      chapters,
       comments,
       reports,
-      openReports: pendingReports,
-      pendingReports,
-      actionedReports,
-      dismissedReports,
-      escalatedReports,
       suspendedUsers,
-      bannedUsers,
       verificationRequests,
       pendingVerifications: verificationRequests,
-      dailyNewUsers,
-      dailyReads,
-      dailyStoryPublishes,
-      topStories,
+      featuredStory: featuredPlacement?.storyId || null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function ownerControls(req, res) {
+  try {
+    const staff = await User.find({ roles: { $in: ["owner", "admin", "moderator"] } })
+      .select("username displayName email roles createdAt status")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      owner: staff.find((user) => normalizeRoles(user.roles).includes("owner")) || null,
+      admins: staff.filter((user) => normalizeRoles(user.roles).includes("admin")),
+      moderators: staff.filter((user) => normalizeRoles(user.roles).includes("moderator")),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function moderationOverview(req, res) {
+  try {
+    const [pendingReports, actionedReports, dismissedReports, escalatedReports, recentActions, escalatedCases] =
+      await Promise.all([
+        Report.countDocuments({ status: "pending" }),
+        Report.countDocuments({ status: "action_taken" }),
+        Report.countDocuments({ status: "dismissed" }),
+        Report.countDocuments({ status: "escalated" }),
+        ModerationLog.find({
+          action: {
+            $in: [
+              "story_hide",
+              "story_archive",
+              "comment_hide",
+              "comment_delete",
+              "user_warn",
+              "user_suspend",
+              "report_hide_content",
+              "report_delete_comment",
+              "report_warn_user",
+              "report_suspend_user",
+            ],
+          },
+        })
+          .populate("actorId", "username displayName roles")
+          .sort({ createdAt: -1 })
+          .limit(12)
+          .lean(),
+        Report.find({ status: "escalated" })
+          .populate("reporterId", "username displayName email")
+          .sort({ createdAt: -1 })
+          .limit(10)
+          .lean(),
+      ]);
+
+    res.json({
+      counts: { pendingReports, actionedReports, dismissedReports, escalatedReports },
+      recentActions,
+      escalatedCases,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -187,6 +215,9 @@ export async function updateUserRole(req, res) {
   try {
     const { role, enabled = true } = req.body;
     const normalizedRole = normalizeRoles([role])[0];
+    if (normalizedRole === "owner") {
+      return res.status(400).json({ message: "Use ownership transfer to change the owner" });
+    }
     if (["moderator", "admin", "owner"].includes(normalizedRole) && !canManageAdmins(req.user)) {
       return res.status(403).json({ message: "Only owners can manage moderators, admins, or owners" });
     }
@@ -208,11 +239,49 @@ export async function updateUserRole(req, res) {
   }
 }
 
+export async function transferOwnership(req, res) {
+  try {
+    const nextOwner = await User.findById(req.params.id).select("-passwordHash");
+    if (!nextOwner) return res.status(404).json({ message: "User not found" });
+    if (nextOwner.status === "banned") return res.status(400).json({ message: "Cannot transfer ownership to a banned user" });
+
+    const currentOwner = await User.findOne({ roles: "owner" }).select("-passwordHash");
+    if (currentOwner && currentOwner._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only the current owner can transfer ownership" });
+    }
+
+    await User.updateMany({ _id: { $ne: nextOwner._id }, roles: "owner" }, { $pull: { roles: "owner" } });
+    const updatedOwner = await User.findByIdAndUpdate(
+      nextOwner._id,
+      { $addToSet: { roles: { $each: ["user", "admin", "owner"] } }, status: "active" },
+      { new: true }
+    ).select("-passwordHash");
+
+    if (currentOwner && currentOwner._id.toString() !== updatedOwner._id.toString()) {
+      await User.findByIdAndUpdate(currentOwner._id, { $addToSet: { roles: "admin" } });
+    }
+
+    await logAction(req.user._id, "ownership_transferred", "user", updatedOwner._id, req.body.reason || "Manual ownership transfer", {
+      actorRole: highestRole(req.user),
+      previousOwnerId: currentOwner?._id,
+    });
+
+    res.json({ owner: { ...updatedOwner.toObject(), roles: normalizeRoles(updatedOwner.roles || []) } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 export async function disciplineUser(req, res) {
   try {
     const action = req.body.action || (req.body.status === "active" ? "restore" : req.body.status);
     const reason = req.body.reason || "Moderator action";
     const update = {};
+    const actorRole = highestRole(req.user);
+
+    if (["suspend", "ban", "restore"].includes(action) && !["admin", "owner"].includes(actorRole)) {
+      return res.status(403).json({ message: "Only admins or owners can suspend, ban, or restore users" });
+    }
 
     if (action === "warn") {
       update.status = "warned";
@@ -256,9 +325,126 @@ export async function disciplineUser(req, res) {
 
 export const suspendUser = disciplineUser;
 
+export async function userDisciplineCenter(req, res) {
+  try {
+    const user = await User.findById(req.params.id).select("-passwordHash").lean();
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const [reportsAgainstUser, authoredStories, authoredComments, logs] = await Promise.all([
+      Report.find({ targetType: "user", targetId: user._id })
+        .populate("reporterId", "username displayName email")
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean(),
+      Story.find({ authorId: user._id }).select("_id title slug visibility moderationStatus moderationReason moderatedAt").lean(),
+      Comment.find({ authorId: user._id }).select("_id content status moderationReason moderatedAt storyId chapterId").lean(),
+      ModerationLog.find({ targetType: "user", targetId: user._id })
+        .populate("actorId", "username displayName roles")
+        .sort({ createdAt: -1 })
+        .limit(100)
+        .lean(),
+    ]);
+
+    const storyIds = authoredStories.map((story) => story._id);
+    const commentIds = authoredComments.map((comment) => comment._id);
+    const contentReports = await Report.find({
+      $or: [
+        { targetType: "story", targetId: { $in: storyIds } },
+        { targetType: "comment", targetId: { $in: commentIds } },
+      ],
+    })
+      .populate("reporterId", "username displayName email")
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
+
+    const timeline = [
+      ...(user.discipline?.warnings || []).map((warning) => ({
+        type: "warning",
+        action: "Warning",
+        reason: warning.reason,
+        createdAt: warning.createdAt,
+        actorId: warning.moderatorId,
+      })),
+      ...(user.discipline?.suspension?.startDate
+        ? [
+            {
+              type: user.status === "banned" || user.discipline.suspension.permanent ? "ban" : "suspension",
+              action: user.status === "banned" || user.discipline.suspension.permanent ? "Ban" : "Suspension",
+              reason: user.discipline.suspension.reason,
+              createdAt: user.discipline.suspension.startDate,
+              endDate: user.discipline.suspension.endDate,
+              actorId: user.discipline.suspension.moderatedBy,
+            },
+          ]
+        : []),
+      ...logs.map((log) => ({
+        type: "moderation_log",
+        action: log.action,
+        reason: log.reason,
+        createdAt: log.createdAt,
+        actor: log.actorId,
+      })),
+      ...reportsAgainstUser.map((report) => ({
+        type: "report",
+        action: "User reported",
+        reason: report.reason,
+        status: report.status,
+        createdAt: report.createdAt,
+        reporter: report.reporterId,
+      })),
+      ...contentReports.map((report) => ({
+        type: "content_report",
+        action: `${report.targetType} reported`,
+        reason: report.reason,
+        status: report.status,
+        targetType: report.targetType,
+        targetId: report.targetId,
+        createdAt: report.createdAt,
+        reporter: report.reporterId,
+      })),
+      ...authoredStories
+        .filter((story) => story.moderatedAt)
+        .map((story) => ({
+          type: "story_moderation",
+          action: `Story ${story.visibility}`,
+          reason: story.moderationReason,
+          targetTitle: story.title,
+          createdAt: story.moderatedAt,
+        })),
+      ...authoredComments
+        .filter((comment) => comment.moderatedAt)
+        .map((comment) => ({
+          type: "comment_moderation",
+          action: `Comment ${comment.status}`,
+          reason: comment.moderationReason,
+          targetTitle: comment.content?.slice(0, 120),
+          createdAt: comment.moderatedAt,
+        })),
+    ]
+      .filter((item) => item.createdAt)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json({
+      user: { ...user, roles: normalizeRoles(user.roles || []) },
+      reports: [...reportsAgainstUser, ...contentReports],
+      stories: authoredStories,
+      comments: authoredComments,
+      logs,
+      timeline,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 export async function moderateStory(req, res) {
   try {
     const action = req.body.action;
+    const actorRole = highestRole(req.user);
+    if (action === "archive" && !["admin", "owner"].includes(actorRole)) {
+      return res.status(403).json({ message: "Only admins or owners can archive stories" });
+    }
     const map = {
       hide: { visibility: "hidden", moderationStatus: "hidden" },
       restore: { visibility: "public", moderationStatus: "clean" },
@@ -287,6 +473,10 @@ export async function moderateStory(req, res) {
 export async function moderateComment(req, res) {
   try {
     const action = req.body.action;
+    const actorRole = highestRole(req.user);
+    if (action === "delete" && !["admin", "owner"].includes(actorRole)) {
+      return res.status(403).json({ message: "Only admins or owners can delete comments" });
+    }
     const statusMap = { hide: "hidden", delete: "deleted", restore: "visible" };
     if (!statusMap[action]) return res.status(400).json({ message: "Invalid comment moderation action" });
 
@@ -317,8 +507,8 @@ export async function featureStory(req, res) {
     const enabled = Boolean(req.body.enabled);
     story.featured = {
       enabled,
-      slot: req.body.slot || "recommended",
-      rank: Math.min(99, Math.max(1, Number(req.body.rank || 10))),
+      slot: "recommended",
+      rank: 1,
       until: req.body.until || req.body.endDate || null,
     };
     story.original = {
@@ -337,8 +527,8 @@ export async function featureStory(req, res) {
           startDate: req.body.startDate || new Date(),
           endDate: req.body.endDate || req.body.until || null,
           featuredBy: req.user._id,
-          slot: story.featured.slot,
-          rank: story.featured.rank,
+          slot: "recommended",
+          rank: 1,
           active: true,
         },
         { new: true, upsert: true, setDefaultsOnInsert: true }

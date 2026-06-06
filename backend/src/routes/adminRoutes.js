@@ -11,13 +11,17 @@ import {
   listUsers,
   moderateComment,
   moderateStory,
+  moderationOverview,
   moderationLogs,
+  ownerControls,
   requestMoreVerificationInfo,
   rejectVerification,
   suspendUser,
+  transferOwnership,
   updateAdminGenre,
   updateUser,
   updateUserRole,
+  userDisciplineCenter,
   verificationRequests,
 } from "../controllers/adminController.js";
 import { list as listReports, resolve as resolveReport } from "../controllers/reportController.js";
@@ -32,6 +36,7 @@ const ownerOnly = authorizeRoles("owner");
 router.use(authenticate);
 
 router.get("/analytics", moderatorOrAbove, analytics);
+router.get("/moderation", moderatorOrAbove, moderationOverview);
 router.get("/reports", moderatorOrAbove, listReports);
 router.patch("/reports/:id/resolve", moderatorOrAbove, resolveReport);
 router.patch("/stories/:id/moderate", moderatorOrAbove, moderateStory);
@@ -40,8 +45,11 @@ router.patch("/users/:id/discipline", moderatorOrAbove, disciplineUser);
 router.patch("/users/:id/suspend", moderatorOrAbove, suspendUser);
 
 router.get("/users", adminOrOwner, listUsers);
+router.get("/users/:id/discipline-center", adminOrOwner, userDisciplineCenter);
 router.put("/users/:id", adminOrOwner, updateUser);
 router.patch("/users/:id/role", adminOrOwner, updateUserRole);
+router.patch("/users/:id/transfer-ownership", ownerOnly, transferOwnership);
+router.get("/owner-controls", ownerOnly, ownerControls);
 router.get("/featured", adminOrOwner, featuredStories);
 router.patch("/stories/:id/feature", adminOrOwner, featureStory);
 router.get("/verification-requests", adminOrOwner, verificationRequests);

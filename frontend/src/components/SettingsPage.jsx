@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Globe, Lock, Moon } from "lucide-react";
+import { BadgeCheck, Globe, Lock, Moon } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { apiClient } from "../lib/apiClient";
 import { useUser } from "../hooks/useUser";
@@ -15,6 +15,11 @@ const SettingsPage = () => {
   const [language, setLanguage] = useState(() => localStorage.getItem("madalLanguage") || "so");
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("madalDarkMode") === "true");
   const [loading, setLoading] = useState(false);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationForm, setVerificationForm] = useState({
+    qualityNotes: "",
+    evidence: "",
+  });
 
   useEffect(() => {
     localStorage.setItem("madalLanguage", language);
@@ -51,6 +56,27 @@ const SettingsPage = () => {
     }
   };
 
+  const requestVerification = async (event) => {
+    event.preventDefault();
+    setVerificationLoading(true);
+
+    try {
+      await apiClient.post("/verification-requests", {
+        qualityNotes: verificationForm.qualityNotes,
+        evidence: verificationForm.evidence
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
+      });
+      toast.success("Verification request sent");
+      setVerificationForm({ qualityNotes: "", evidence: "" });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not request verification");
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-10">
       <section className="mx-auto max-w-3xl">
@@ -61,6 +87,53 @@ const SettingsPage = () => {
         </div>
 
         <div className="mt-8 space-y-5">
+          <form onSubmit={requestVerification} className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <SectionTitle
+              icon={BadgeCheck}
+              title="Request Verification"
+              text="Ask Madal admins to review your account for a verified author badge."
+            />
+            <div className="mt-5 space-y-4">
+              <label className="block text-sm font-bold text-gray-700">
+                Why should this account be verified?
+                <textarea
+                  value={verificationForm.qualityNotes}
+                  onChange={(event) =>
+                    setVerificationForm((current) => ({ ...current, qualityNotes: event.target.value }))
+                  }
+                  rows={4}
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  placeholder="Tell admins about your authorship, publishing history, or why readers should trust this profile."
+                  required
+                />
+              </label>
+              <label className="block text-sm font-bold text-gray-700">
+                Evidence links
+                <textarea
+                  value={verificationForm.evidence}
+                  onChange={(event) =>
+                    setVerificationForm((current) => ({ ...current, evidence: event.target.value }))
+                  }
+                  rows={3}
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  placeholder="Optional: one link per line"
+                />
+              </label>
+              <button
+                disabled={verificationLoading || user.verification?.status === "pending" || user.verification?.status === "approved"}
+                className="rounded-lg bg-orange-600 px-5 py-3 font-black text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-orange-300"
+              >
+                {user.verification?.status === "approved"
+                  ? "Already Verified"
+                  : user.verification?.status === "pending"
+                    ? "Request Pending"
+                    : verificationLoading
+                      ? "Sending..."
+                      : "Request Verification"}
+              </button>
+            </div>
+          </form>
+
           <form onSubmit={changePassword} className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <SectionTitle icon={Lock} title="Change Password" text="Update your login password." />
             <div className="mt-5 space-y-4">
